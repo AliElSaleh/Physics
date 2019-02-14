@@ -2,6 +2,7 @@
 
 #include "Application.h"
 #include "Renderer2D.h"
+#include "World.h"
 
 class Physics2DEngine final : public aie::Application
 {
@@ -13,13 +14,15 @@ public:
 	bool Startup() override;
 	void Shutdown() override;
 
-	void Update(float deltaTime) override;
+	void Update(float DeltaTime) override;
 	void Draw() override;
 
 protected:
 
 	aie::Renderer2D* Renderer{};
 	aie::Font* Font{};
+
+	World* PhysicsWorld{};
 
 private:
 

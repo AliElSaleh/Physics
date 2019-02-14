@@ -21,7 +21,7 @@ public:
 	// these functions must be implemented by a derived class
 	virtual bool Startup() = 0;
 	virtual void Shutdown() = 0;
-	virtual void Update(float deltaTime) = 0;
+	virtual void Update(float DeltaTime) = 0;
 	virtual void Draw() = 0;
 
 	// wipes the screen clear to begin a frame of drawing
