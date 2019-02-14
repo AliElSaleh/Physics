@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="_2D_Physics_EngineApp.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="Physics2DEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="_2D_Physics_EngineApp.h">
+    <ClInclude Include="Physics2DEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,17 +1,17 @@
-#include "_2D_Physics_EngineApp.h"
+#include "Physics_2D_EngineApp.h"
 #include "Texture.h"
 #include "Font.h"
 #include "Input.h"
 
-_2D_Physics_EngineApp::_2D_Physics_EngineApp() {
+Physics_2D_EngineApp::Physics_2D_EngineApp() {
 
 }
 
-_2D_Physics_EngineApp::~_2D_Physics_EngineApp() {
+Physics_2D_EngineApp::~Physics_2D_EngineApp() {
 
 }
 
-bool _2D_Physics_EngineApp::startup() {
+bool Physics_2D_EngineApp::startup() {
 	
 	m_2dRenderer = new aie::Renderer2D();
 
@@ -22,13 +22,13 @@ bool _2D_Physics_EngineApp::startup() {
 	return true;
 }
 
-void _2D_Physics_EngineApp::shutdown() {
+void Physics_2D_EngineApp::shutdown() {
 
 	delete m_font;
 	delete m_2dRenderer;
 }
 
-void _2D_Physics_EngineApp::update(float deltaTime) {
+void Physics_2D_EngineApp::update(float deltaTime) {
 
 	// input example
 	aie::Input* input = aie::Input::getInstance();
@@ -38,7 +38,7 @@ void _2D_Physics_EngineApp::update(float deltaTime) {
 		quit();
 }
 
-void _2D_Physics_EngineApp::draw() {
+void Physics_2D_EngineApp::draw() {
 
 	// wipe the screen to the background colour
 	clearScreen();

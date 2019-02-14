@@ -1,9 +1,9 @@
-#include "_2D_Physics_EngineApp.h"
+#include "Physics2DEngine.h"
 
 int main() {
 	
 	// allocation
-	auto app = new _2D_Physics_EngineApp();
+	auto app = new Physics2DEngine();
 
 	// initialise and loop
 	app->run("AIE", 1280, 720, false);

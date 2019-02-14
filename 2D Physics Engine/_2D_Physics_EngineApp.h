@@ -3,11 +3,11 @@
 #include "Application.h"
 #include "Renderer2D.h"
 
-class _2D_Physics_EngineApp : public aie::Application {
+class Physics_2D_EngineApp : public aie::Application {
 public:
 
-	_2D_Physics_EngineApp();
-	virtual ~_2D_Physics_EngineApp();
+	Physics_2D_EngineApp();
+	virtual ~Physics_2D_EngineApp();
 
 	virtual bool startup();
 	virtual void shutdown();
