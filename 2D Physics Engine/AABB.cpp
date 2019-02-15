@@ -11,6 +11,13 @@ AABB::AABB(const glm::vec2 Location, glm::vec2 Velocity, const float Width, cons
 	this->Height = Extent.y * 2;
 	this->Mass = Mass;
 
+	if (this->Mass == 0)
+		this->InverseMass = 0;
+	else
+		this->InverseMass = 1.0f / Mass;
+	
+	this->Normal = { 1.0f, 0.0f };
+
 	this->Color = Color;
 
 	Shape = SQUARE;
@@ -34,3 +41,4 @@ void AABB::MakeGizmo()
 {
 	aie::Gizmos::add2DAABBFilled(Location, Extent, Color);
 }
+

@@ -165,6 +165,7 @@
   <ItemGroup>
     <ClCompile Include="AABB.cpp" />
     <ClCompile Include="Circle.cpp" />
+    <ClCompile Include="Manifold.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Physics2DEngine.cpp" />
     <ClCompile Include="main.cpp" />
@@ -173,6 +174,7 @@
   <ItemGroup>
     <ClInclude Include="AABB.h" />
     <ClInclude Include="Circle.h" />
+    <ClInclude Include="Manifold.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="Physics2DEngine.h" />
     <ClInclude Include="World.h" />

@@ -8,6 +8,13 @@ Circle::Circle(const glm::vec2 Location, const glm::vec2 Velocity, const float R
 	this->Velocity = Velocity;
 	this->Radius = Radius;
 	this->Mass = Mass;
+	
+	if (this->Mass == 0)
+		this->InverseMass = 0;
+	else
+		this->InverseMass = 1.0f / Mass;
+	
+	this->Normal = { 0.0f, 1.0f };
 
 	this->Color = Color;
 
@@ -26,4 +33,3 @@ void Circle::MakeGizmo()
 {
 	aie::Gizmos::add2DCircle(Location, Radius, 50, Color);
 }
-
