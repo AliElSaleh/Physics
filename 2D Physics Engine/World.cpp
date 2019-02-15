@@ -216,7 +216,73 @@ bool World::CircleToCircle(Manifold* M)
 
 bool World::AABBToCircle(Manifold* M)
 {
-	return false;
+	const auto Rec = dynamic_cast<AABB*>(M->A);
+	const auto Circle = dynamic_cast<::Circle*>(M->B);
+
+	const glm::vec2 CollisionNormal = Circle->GetLocation() - Rec->GetLocation();
+
+	// Closest Point of Rec to center of Circle
+	glm::vec2 Closest = CollisionNormal;
+
+	// Calculate half extents along each axis
+	const float XExtent = (Rec->GetMax().x - Rec->GetMin().x) / 2;
+	const float YExtent = (Rec->GetMax().y - Rec->GetMin().y) / 2;
+
+	// Clamp point to edges of the AABB
+	Closest.x = glm::clamp(-XExtent, XExtent, Closest.x);
+	Closest.y = glm::clamp(-YExtent, YExtent, Closest.y);
+
+	bool bInside = false;
+
+	// Circle is inside the AABB, so we need to clamp the circle's center to the closest edge
+	if (CollisionNormal == Closest)
+	{
+		bInside = true;
+
+		// Find the closest axis
+		if (abs(CollisionNormal.x) > abs(CollisionNormal.y))
+		{
+			// Clamp to closest extent
+			if (Closest.x > 0)
+				Closest.x = XExtent;
+			else
+				Closest.x = -XExtent;
+		}
+		// y axis is shorter
+		else
+		{
+			// Clamp to the closest extent
+			if (Closest.y > 0)
+				Closest.y = YExtent;
+			else
+				Closest.y = -YExtent;
+		}
+	}
+
+	const glm::vec2 Normal = CollisionNormal - Closest;
+	float D = length(Normal) * length(Normal);
+	const float Radius = Circle->GetRadius();
+
+	// If the distance is greater than the radius squared, do nothing
+	if (D > Radius * Radius && !bInside)
+		return false;
+
+	D = sqrtf(D);
+
+	// Collision normal needs to be flipped to point outside if circle was inside the AABB
+	if (bInside)
+	{
+		M->Normal = -CollisionNormal;
+		M->Penetration = Radius - D;
+	}
+	else
+	{
+		M->Normal = CollisionNormal;
+		M->Penetration = Radius - D;
+	}
+
+	ResolveCollision(Rec, Circle);
+	return true;
 }
 
 //bool World::AABBToCircle(Object* A, Object* B)
