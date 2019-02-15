@@ -18,8 +18,8 @@ public:
 	float GetWidth() const { return Extent.x * 2; }
 	float GetHeight() const { return Extent.y * 2; }
 
-	glm::vec2 GetMin() const { return Location; }
-	glm::vec2 GetMax() const { return Location + Extent + Width/2; }
+	glm::vec2 GetMin() const { return Min; }
+	glm::vec2 GetMax() const { return Max; }
 
 protected:
 	glm::vec2 Extent{};

@@ -4,7 +4,6 @@
 #include "AABB.h"
 #include "Circle.h"
 #include "Gizmos.h"
-#include "Manifold.h"
 
 #include <glm/gtc/matrix_transform.inl>
 
@@ -20,8 +19,29 @@ bool Physics2DEngine::Startup()
 	aie::Gizmos::create(255U, 255U, 65535U, 65535U);
 
 	PhysicsWorld = new World();
-	PhysicsWorld->Gravity = {0.0f, 0.0f};
+	PhysicsWorld->Gravity = {0.0f, -9.8f};
 	PhysicsWorld->TimeStep = 0.01f;
+
+	// AABB Borders
+	// Left
+	auto B = new AABB({ -90.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 1.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+	B->SetKinematic(false);
+	PhysicsWorld->AddActor(B);
+	
+	// Right
+	//B = new AABB({ 90.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 1.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+	//B->SetKinematic(true);
+	//PhysicsWorld->AddActor(B);
+	
+	//// Top
+	//B = new AABB({ 0.0f, 45.0f }, { 0.0f, 0.0f }, 150.0f, 5.0f, 1.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+	//B->SetKinematic(true);
+	//PhysicsWorld->AddActor(B);
+	
+	// Bottom
+	//B = new AABB({ 0.0f, -45.0f }, { 0.0f, 0.0f }, 150.0f, 5.0f, 1.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+	//B->SetKinematic(true);
+	//PhysicsWorld->AddActor(B);
 
 	// Bounding boxes
 	//auto* R = new AABB({ -30.0f, -30.0f }, { 20.0f, 0.0f }, 10.0f, 20.0f, 8.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
@@ -38,10 +58,11 @@ bool Physics2DEngine::Startup()
 	//PhysicsWorld->AddActor(C);
 
 	// AABB vs Circle
-	const auto R = new AABB({ -30.0f, 0.0f }, { 10.0f, 0.0f }, 10.0f, 20.0f, 8.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+	const auto R = new AABB({ -50.0f, 0.0f }, { 20.0f, 0.0f }, 10.0f, 20.0f, 6.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+	R->SetKinematic(false);
 	PhysicsWorld->AddActor(R);
 
-	const auto C = new Circle({ 30.0f, 0.0f }, { -10.0f, 0.0f }, 7.0f, 7.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
+	const auto C = new Circle({ 50.0f, 0.0f }, { -20.0f, 0.0f }, 5.0f, 4.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
 	PhysicsWorld->AddActor(C);
 
 	return true;

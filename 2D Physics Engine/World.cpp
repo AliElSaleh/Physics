@@ -33,6 +33,9 @@ void World::Update(const float DeltaTime)
 	static float AccumulatedTime = 0.0f;
 	AccumulatedTime += DeltaTime;
 
+	if (AccumulatedTime >= 0.2f)
+		AccumulatedTime = 0.2f;
+
 	while (AccumulatedTime >= DeltaTime)
 	{
 		for (auto Actor : Actors)
@@ -110,53 +113,76 @@ bool World::AABBToAABB(Manifold* M)
 	const auto Rec1 = dynamic_cast<AABB*>(M->A);
 	const auto Rec2 = dynamic_cast<AABB*>(M->B);
 
-	const glm::vec2 Distance = Rec2->GetLocation() - Rec1->GetLocation();
-
-	// Calculate half extents along x axis for each object
-	const float Rec1Extent = (Rec1->GetMax().x - Rec1->GetMin().x) / 2;
-	const float Rec2Extent = (Rec2->GetMax().x - Rec2->GetMin().x) / 2;
-
-	// Calculate overlap on x axis
-	const float XOverlap = Rec1Extent + Rec2Extent - abs(Distance.x);
-
-	// SAT test on x axis
-	if (XOverlap > 0)
+	if (Rec1 != nullptr && Rec2 != nullptr)
 	{
-		// Calculate half extents along y axis for each object
-		const float Rec1Extent2 = (Rec1->GetMax().y - Rec1->GetMin().y) / 2;
-		const float Rec2Extent2 = (Rec2->GetMax().y - Rec2->GetMin().y) / 2;
-
-		// Calculate overlap on y axis
-		const float YOverlap = Rec1Extent2 + Rec2Extent2 - abs(Distance.y);
-
-		if (YOverlap > 0)
+		// Exit with no intersection if found sepRec1rRec1ted Rec1long Rec1n Rec1xis
+		if (Rec1->GetMax().x < Rec2->GetMin().x || Rec1->GetMin().x > Rec2->GetMax().x)
 		{
-			// Find out which axis is axis of least penetration
-			if (XOverlap > YOverlap)
-			{
-				// Points towards B knowing that Distance from Rec1 to Rec2
-				if (Distance.x < 0)
-					M->Normal = glm::vec2(-1.0f, 0.0f);
-				else
-					M->Normal = glm::vec2(0.0f, 0.0f);
-
-				M->Penetration = XOverlap;
-
-				ResolveCollision(Rec1, Rec2);
-				return true;
-			}
-
-			if (Distance.y < 0)
-				M->Normal = glm::vec2(0.0f, -1.0f);
-			else
-				M->Normal = glm::vec2(0.0f, 1.0f);
-
-			M->Penetration = YOverlap;
-
-			ResolveCollision(Rec1, Rec2);
-			return true;
+			printf("AABB: Not Colliding!\n");
+			return false;
 		}
+		if (Rec1->GetMax().y < Rec2->GetMin().y || Rec1->GetMin().y > Rec2->GetMax().y)
+		{
+			printf("AABB: Not Colliding!\n");
+			return false;
+		}
+	
+		ResolveCollision(Rec1, Rec2);
+	
+		// No separating axis found, at least one overlapping axis is intersecting
+		return true ? printf("AABB: Collided!\n") : false;
 	}
+
+
+	//const glm::vec2 Distance = Rec2->GetLocation() - Rec1->GetLocation();
+
+	//// Calculate half extents along x axis for each object
+	//const float Rec1Extent = (Rec1->GetMax().x - Rec1->GetMin().x) / 2;
+	//const float Rec2Extent = (Rec2->GetMax().x - Rec2->GetMin().x) / 2;
+
+	//// Calculate overlap on x axis
+	//const float XOverlap = Rec1Extent + Rec2Extent - abs(Distance.x);
+
+	//// SAT test on x axis
+	//if (XOverlap > 0)
+	//{
+	//	// Calculate half extents along y axis for each object
+	//	const float Rec1Extent2 = (Rec1->GetMax().y - Rec1->GetMin().y) / 2;
+	//	const float Rec2Extent2 = (Rec2->GetMax().y - Rec2->GetMin().y) / 2;
+
+	//	// Calculate overlap on y axis
+	//	const float YOverlap = Rec1Extent2 + Rec2Extent2 - abs(Distance.y);
+
+	//	if (YOverlap > 0)
+	//	{
+	//		// Find out which axis is axis of least penetration
+	//		if (XOverlap > YOverlap)
+	//		{
+	//			// Points towards B knowing that Distance from Rec1 to Rec2
+	//			if (Distance.x < 0)
+	//				M->Normal = glm::vec2(-1.0f, 0.0f);
+	//			else
+	//				M->Normal = glm::vec2(0.0f, 0.0f);
+
+	//			M->Penetration = XOverlap;
+
+	//			ResolveCollision(Rec1, Rec2);
+	//			printf("AABB: Collided!\n");
+	//			return true;
+	//		}
+
+	//		if (Distance.y < 0)
+	//			M->Normal = glm::vec2(0.0f, -1.0f);
+	//		else
+	//			M->Normal = glm::vec2(0.0f, 1.0f);
+
+	//		M->Penetration = YOverlap;
+
+	//		ResolveCollision(Rec1, Rec2);
+	//		printf("AABB: Collided!\n");
+	//		return true;
+	//	}
+	//}
 
 	return false;
 }
@@ -208,6 +234,7 @@ bool World::CircleToCircle(Manifold* M)
 		M->Penetration = Radius - D;
 		M->Normal = Distance / D;
 		ResolveCollision(C1, C2);
+		printf("Circle: Collided!\n");
 		return true;
 	}
 
@@ -323,7 +350,7 @@ void World::ResolveCollision(Object* const A, Object* const B)
 	A->ApplyForce(-Ratio * Impulse);
 	Ratio = B->GetInverseMass() / MassSum;
 	B->ApplyForce(Ratio * Impulse);
-
+	
 	PositionalCorrection(A, B);
 }
 
