@@ -1,8 +1,10 @@
 #include "Circle.h"
 #include "Gizmos.h"
+
 #include <stdio.h>
 
 Circle::Circle(const glm::vec2 Location, const glm::vec2 Velocity, const float Radius, const float Mass, const glm::vec4 Color)
+	: Collider(CIRCLE)
 {
 	this->Location = Location;
 	this->Velocity = Velocity;
@@ -18,7 +20,7 @@ Circle::Circle(const glm::vec2 Location, const glm::vec2 Velocity, const float R
 
 	this->Color = Color;
 
-	Shape = CIRCLE;
+	Shape = Geometry::CIRCLE;
 }
 
 Circle::~Circle() = default;
@@ -32,4 +34,6 @@ void Circle::Debug()
 void Circle::MakeGizmo()
 {
 	aie::Gizmos::add2DCircle(Location, Radius, 50, Color);
+
+	aie::Gizmos::add2DCircle(Location, 1.0f, 30, {0.0f, 1.0f, 0.0f, 1.0f});
 }

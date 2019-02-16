@@ -2,8 +2,9 @@
 #include "Object.h"
 
 #include <glm/vec2.hpp>
+#include "Collider.h"
 
-class AABB final : public Object
+class AABB final : public Object, public Collider
 {
 public:
 	AABB(glm::vec2 Location, glm::vec2 Velocity, float Width, float Height, float Mass, glm::vec4 Color);
@@ -23,6 +24,7 @@ public:
 
 protected:
 	glm::vec2 Extent{};
+	
 
 	float Width{}, Height{};
 

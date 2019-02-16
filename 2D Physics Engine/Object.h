@@ -24,6 +24,7 @@ public:
 	glm::vec2 GetLocation() const { return Location; }
 	glm::vec2 GetVelocity() const { return  Velocity; }
 	glm::vec2 GetNormal() const { return Normal; }
+	
 
 	void SetKinematic(const bool State) { bIsKinematic = State; }
 	bool IsKinematic() const { return bIsKinematic; }
@@ -34,11 +35,13 @@ public:
 	float GetInverseMass() const { return InverseMass; }
 	float GetRestitution() const { return Restitution; }
 
+	glm::vec2 ContactLocation{};
 protected:
 	float Mass{1.0f};
 	float InverseMass{ 1.0f / Mass };
 	float Restitution{0.6f};
 	float PenetrationDepth{0.0f};
+	float LinearDrag{0.8f};
 
 	glm::vec2 Location{};
 	glm::vec2 Velocity{1.0f, 1.0f};
