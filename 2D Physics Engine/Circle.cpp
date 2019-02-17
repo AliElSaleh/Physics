@@ -1,5 +1,6 @@
 #include "Circle.h"
 #include "Gizmos.h"
+#include <glm/ext.hpp>
 
 #include <stdio.h>
 
@@ -16,7 +17,7 @@ Circle::Circle(const glm::vec2 Location, const glm::vec2 Velocity, const float R
 	else
 		this->InverseMass = 1.0f / Mass;
 	
-	this->Normal = { 0.0f, 1.0f };
+	this->Normal = normalize(Velocity);
 
 	this->Color = Color;
 

@@ -24,7 +24,8 @@ public:
 	glm::vec2 GetLocation() const { return Location; }
 	glm::vec2 GetVelocity() const { return  Velocity; }
 	glm::vec2 GetNormal() const { return Normal; }
-	
+
+	void SetNormal(const glm::vec2 Normal) { this->Normal = Normal; }
 
 	void SetKinematic(const bool State) { bIsKinematic = State; }
 	bool IsKinematic() const { return bIsKinematic; }
@@ -45,7 +46,7 @@ protected:
 
 	glm::vec2 Location{};
 	glm::vec2 Velocity{1.0f, 1.0f};
-	glm::vec2 Normal{ 0.0f, 1.0f };
+	glm::vec2 Normal{};
 
 	glm::vec4 Color{1.0f, 1.0f, 1.0f, 1.0f};
 

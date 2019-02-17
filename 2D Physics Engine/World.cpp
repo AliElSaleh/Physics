@@ -210,15 +210,26 @@ bool World::AABBToCircle(Manifold* M)
 		const glm::vec2 CollisionNormal = Circle->GetLocation() - Rec->GetLocation();
 
 		// Closest Point of Rec to center of Circle
-		glm::vec2 Closest = CollisionNormal;
+		glm::vec2 Closest;
 
 		// Calculate half extents along each axis
 		const float XExtent = (Rec->GetMax().x - Rec->GetMin().x) / 2;
 		const float YExtent = (Rec->GetMax().y - Rec->GetMin().y) / 2;
 
 		// Clamp point to edges of the AABB
-		Closest.x = glm::clamp(-XExtent, XExtent, Closest.x);
-		Closest.y = glm::clamp(-YExtent, YExtent, Closest.y);
+		Closest.x = glm::max(Rec->GetLocation().x - XExtent, glm::min(Circle->GetLocation().x, Rec->GetLocation().x + XExtent));
+		Closest.y = glm::max(Rec->GetLocation().y - YExtent, glm::min(Circle->GetLocation().y, Rec->GetLocation().y + YExtent));
+
+		const glm::vec2 Distance = Circle->GetLocation() - Closest;
+
+		if (Distance.x * Distance.x + Distance.y * Distance.y < Circle->GetRadius() * Circle->GetRadius())
+		{
+			ResolveCollision(Rec, Circle);
+			printf("AABBToCircle: Collided!\n");
+			return true;
+		}
+
+		return false;
 
 		bool bInside = false;
 

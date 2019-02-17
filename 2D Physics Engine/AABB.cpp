@@ -1,9 +1,10 @@
 #include "AABB.h"
 #include "Gizmos.h"
 
+#include <glm/ext.hpp>
 #include <stdio.h>
 
-AABB::AABB(const glm::vec2 Location, glm::vec2 Velocity, const float Width, const float Height, const float Mass, const glm::vec4 Color)
+AABB::AABB(const glm::vec2 Location, const glm::vec2 Velocity, const float Width, const float Height, const float Mass, const glm::vec4 Color)
 	: Collider(Type::AABB)
 {
 	this->Location = Location;
@@ -21,7 +22,7 @@ AABB::AABB(const glm::vec2 Location, glm::vec2 Velocity, const float Width, cons
 	this->Min = Location - Extent;
 	this->Max = Location + Extent;
 
-	this->Normal = { 1.0f, 0.0f };
+	this->Normal = normalize(Velocity);
 
 	this->Color = Color;
 
@@ -53,6 +54,9 @@ void AABB::MakeGizmo()
 	// The extent locations
 	aie::Gizmos::add2DCircle(Min, 1.0f, 30, { 0.0f, 1.0f, 0.0f, 1.0f });
 	aie::Gizmos::add2DCircle(Max, 1.0f, 30, { 0.0f, 1.0f, 0.0f, 1.0f });
+
+	// Location
+	aie::Gizmos::add2DCircle(Location, 0.5f, 30, {1.0f, 0.0f, 0.0f, 1.0f});
 
 	// Lines at x and y
 	// aie::Gizmos::add2DLine(Location - Extent, Location + Extent, {1.0f, 1.0f, 1.0f, 1.0f});
