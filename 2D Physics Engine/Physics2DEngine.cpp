@@ -46,21 +46,20 @@ bool Physics2DEngine::Startup()
 	// AABB vs AABB
 	//auto* R = new AABB({ -30.0f, -30.0f }, { 20.0f, 0.0f }, 10.0f, 20.0f, 8.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
 	//PhysicsWorld->AddActor(R);
-	//
-	//R = new AABB({ 30.0f, -30.0f }, { -20.0f, 0.0f }, 5.0f, 30.0f, 6.0f, { 0.0f, 1.0f, 0.0f, 1.0f });
-	//R->SetKinematic(true);
+	
+	//R = new AABB({ 30.0f, -25.0f }, { -20.0f, 0.0f }, 5.0f, 30.0f, 6.0f, { 0.0f, 1.0f, 0.0f, 1.0f });
 	//PhysicsWorld->AddActor(R);
-
-	// Circle vs Circle
-	auto* C = new Circle({ -40.0f, 0.0f }, { 30.0f, 0.0f }, 8.0f, 15.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
-	PhysicsWorld->AddActor(C);
+	//
+	//// Circle vs Circle
+	//auto* C = new Circle({ -40.0f, 10.0f }, { 30.0f, 0.0f }, 8.0f, 15.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+	//PhysicsWorld->AddActor(C);
 
 	// AABB vs Circle
-	//const auto R = new AABB({ -50.0f, 0.0f }, { 20.0f, 0.0f }, 10.0f, 20.0f, 6.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
-	//R->SetKinematic(false);
-	//PhysicsWorld->AddActor(R);
+	const auto R = new AABB({ -50.0f, 0.0f }, { 20.0f, 0.0f }, 10.0f, 20.0f, 8.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+	R->SetKinematic(false);
+	PhysicsWorld->AddActor(R);
 	
-	C = new Circle({ 30.0f, 0.0f }, { -30.0f, 0.0f }, 6.0f, 15.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
+	const auto C = new Circle({ 30.0f, 0.0f }, { -30.0f, 0.0f }, 6.0f, 10.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
 	PhysicsWorld->AddActor(C);
 
 	// Circles

@@ -12,7 +12,7 @@ typedef bool(*CollisionFn)(Manifold*);
 
 static CollisionFn CollisionFunctionArray[] =
 {
-	World::AABBToAABB, World::AABBToCircle, World::CircleToCircle
+	World::AABBToAABB, World::CircleToAABB, World::CircleToCircle, World::AABBToCircle
 };
 
 void World::AddActor(Object* Actor)
@@ -74,8 +74,6 @@ void World::CheckForCollisions()
 			
 			if (CollisionFunctionPtr != nullptr)
 				CollisionFunctionPtr(M);
-
-			//printf("Index: %i\n", FunctionIndex);
 		}
 	}
 }
@@ -95,10 +93,31 @@ bool World::AABBToAABB(Manifold* M)
 
 		if (MaxDistance.x < 0 && MaxDistance.y < 0)
 		{
+			M->Penetration = Rec1->GetWidth();
+			M->Normal = {1.0f,0.0f};
+
 			ResolveCollision(M);
-			printf("AABBToAABB: Collided!\n");
+
+			if (Rec1->IsKinematic())
+				printf("AABBToAABB (Kinematic): Collided!\n");
+
+			if (Rec2->IsKinematic())
+				printf("AABBToAABB (Kinematic): Collided!\n");
+
+			if (!Rec1->IsKinematic() && !Rec2->IsKinematic())
+				printf("AABBToAABB: Collided!\n");
+
 			return true;
 		}
+
+		if (Rec1 == nullptr && Rec2 != nullptr)
+			printf("AABBToAABB: Rec1 is null\n");
+
+		if (Rec1 != nullptr && Rec2 == nullptr)
+			printf("AABBToAABB: Rec2 is null\n");
+
+		if (Rec1 == nullptr && Rec2 == nullptr)
+			printf("AABBToAABB: Both of the objects were null\n");
 
 		return false;
 
@@ -174,49 +193,7 @@ bool World::AABBToAABB(Manifold* M)
 	return false;
 }
 
-bool World::CircleToCircle(Manifold* M)
-{
-	const auto C1 = dynamic_cast<Circle*>(M->A);
-	const auto C2 = dynamic_cast<Circle*>(M->B);
-
-	if (C1 != nullptr && C2 != nullptr)
-	{
-		// Calculate the normal
-		const glm::vec2 Normal = C2->GetLocation() - C1->GetLocation();
-
-		const float DistanceSquared = LengthSquared(Normal);
-
-		float Radius = C1->GetRadius() + C2->GetRadius();
-		Radius *= Radius;
-
-		// Check if circles are not contacting each other
-		if (DistanceSquared >= Radius)
-			return false;
-
-		// We are in contact, calculate the distance and resolve collision
-		const float Distance = sqrtf(DistanceSquared);
-
-		if (Distance == 0.0f)
-		{
-			M->Penetration = C1->GetRadius();
-			M->Normal = {1.0f, 0.0f};
-		}
-		else
-		{
-			M->Penetration = Radius - Distance;
-			M->Normal = {Normal.x/Distance, Normal.y/Distance};
-		}
-
-		ResolveCollision(M);
-		return true ? printf("Circle: Collided!\n") : false;
-	}
-
-	printf("CircleToCircle: One of the objects were null\n");
-
-	return false;
-}
-
-bool World::AABBToCircle(Manifold* M)
+bool World::CircleToAABB(Manifold* M)
 {
 	const auto Rec = dynamic_cast<AABB*>(M->A);
 	const auto Circle = dynamic_cast<::Circle*>(M->B);
@@ -241,10 +218,19 @@ bool World::AABBToCircle(Manifold* M)
 		if (LengthSquared(Distance) < Circle->GetRadius() * Circle->GetRadius())
 		{
 			M->Penetration = Circle->GetRadius();
-			M->Normal = {CollisionNormal.x, -CollisionNormal.y};
+			M->Normal = CollisionNormal;
 
 			ResolveCollision(M);
-			printf("AABBToCircle: Collided!\n");
+
+			if (Rec->IsKinematic())
+				printf("AABBToCircle (Kinematic): Collided!\n");
+
+			if (Circle->IsKinematic())
+				printf("AABBToCircle (Kinematic): Collided!\n");
+
+			if (!Rec->IsKinematic() && !Circle->IsKinematic())
+				printf("AABBToCircle: Collided!\n");
+
 			return true;
 		}
 
@@ -305,7 +291,103 @@ bool World::AABBToCircle(Manifold* M)
 		return true;
 	}
 
-	printf("AABBToCircle: One of the objects were null\n");
+	
+	if (Circle == nullptr && Rec != nullptr)
+		printf("CircleToAABB: Circle is null\n");
+
+	if (Circle != nullptr && Rec == nullptr)
+		printf("CircleToAABB: AABB is null\n");
+
+	if (Circle == nullptr && Rec == nullptr)
+		printf("CircleToAABB: Both of the objects were null\n");
+
+	return false;
+}
+
+bool World::CircleToCircle(Manifold* M)
+{
+	const auto C1 = dynamic_cast<Circle*>(M->A);
+	const auto C2 = dynamic_cast<Circle*>(M->B);
+
+	if (C1 != nullptr && C2 != nullptr)
+	{
+		// Calculate the normal
+		const glm::vec2 Normal = C2->GetLocation() - C1->GetLocation();
+
+		const float DistanceSquared = LengthSquared(Normal);
+
+		float Radius = C1->GetRadius() + C2->GetRadius();
+		Radius *= Radius;
+
+		// Check if circles are not contacting each other
+		if (DistanceSquared >= Radius)
+			return false;
+
+		// We are in contact, calculate the distance and resolve collision
+		const float Distance = sqrtf(DistanceSquared);
+
+		if (Distance == 0.0f)
+		{
+			M->Penetration = C1->GetRadius();
+			M->Normal = {1.0f, 0.0f};
+		}
+		else
+		{
+			M->Penetration = Radius - Distance;
+			M->Normal = normalize(Normal);
+		}
+
+		ResolveCollision(M);
+
+		if (C1->IsKinematic())
+			printf("Circle (Kinematic): Collided!\n");
+
+		if (C2->IsKinematic())
+			printf("Circle (Kinematic): Collided!\n");
+
+		if (!C1->IsKinematic() && !C2->IsKinematic())
+			printf("Circle: Collided!\n");
+
+		return true;
+	}
+
+	if (C1 == nullptr && C2 != nullptr)
+		printf("CircleToCircle: C1 is null\n");
+
+	if (C1 != nullptr && C2 == nullptr)
+		printf("CircleToCircle: C2 is null\n");
+	
+	if (C1 == nullptr && C2 == nullptr)
+		printf("CircleToCircle: Both of the objects were null\n");
+
+	return false;
+}
+
+bool World::AABBToCircle(Manifold* M)
+{
+	const auto Circle = dynamic_cast<::Circle*>(M->A);
+	const auto Rec = dynamic_cast<AABB*>(M->B);
+
+	if (Circle != nullptr && Rec != nullptr)
+	{
+		M->A = Rec;
+		M->B = Circle;
+
+		CircleToAABB(M);
+
+		M->Normal *= -1.0f;
+
+		return true;
+	}
+
+	if (Circle == nullptr && Rec != nullptr)
+		printf("AABBToCircle: Circle is null\n");
+
+	if (Circle != nullptr && Rec == nullptr)
+		printf("AABBToCircle: AABB is null\n");
+	
+	if (Circle == nullptr && Rec == nullptr)
+		printf("AABBToCircle: Both of the objects were null\n");
 
 	return false;
 }
@@ -329,36 +411,12 @@ void World::ResolveCollision(Manifold* M)
 		return;
 
 	const glm::vec2 RelativeVelocity = B->GetVelocity() - A->GetVelocity();
-	//const glm::vec2 Normal = B->GetLocation() - A->GetLocation();
 
 	const float VelocityAlongNormal = dot(RelativeVelocity, M->Normal);
-
-	//glm::vec2 PreviousVelocity{};
-	//
-	//if (A->GetVelocity() != glm::zero<glm::vec2>())
-	//	PreviousVelocity = A->GetVelocity();
 
 	// Do not resolve if velocities are separating
 	if (VelocityAlongNormal > 0)
 		return;
-
-	//if (B->IsKinematic())
-	//{
-	//	VelocityAlongNormal = dot(PreviousVelocity, M->Normal);
-	//
-	//	// Calculate restitution
-	//	const float e = glm::min(A->GetRestitution(), B->GetRestitution());
-	//
-	//	// Calculate the impulse scalar
-	//	float j = -(1 + e) * VelocityAlongNormal;
-	//	j /= 1.0f / A->GetMass() + 1 / B->GetMass();
-	//
-	//	// Calculate the amount of force to apply depending on the object's mass
-	//	const glm::vec2 Impulse = j * M->Normal;
-	//
-	//	// Apply impulse
-	//	A->ApplyForce(A->GetInverseMass()*e * Impulse);
-	//}
 
 	// Calculate restitution
 	const float e = glm::min(A->GetRestitution(), B->GetRestitution());
@@ -373,10 +431,10 @@ void World::ResolveCollision(Manifold* M)
 	const glm::vec2 ImpulseVector = {M->Normal.x*j, M->Normal.y*j};
 
 	if (!A->IsKinematic())
-		A->ApplyForce(A->GetInverseMass()*2*-ImpulseVector);
+		A->ApplyForce(A->GetInverseMass()*e*-ImpulseVector);
 
 	if (!B->IsKinematic())
-		B->ApplyForce(B->GetInverseMass()*2*ImpulseVector);
+		B->ApplyForce(B->GetInverseMass()*e*ImpulseVector);
 	
 	PositionalCorrection(M);
 }
@@ -388,9 +446,6 @@ void World::PositionalCorrection(Manifold* M)
 
 	if (A != nullptr && B != nullptr)
 	{
-		const float AverageVelocity = A->GetVelocity().x + A->GetVelocity().y + B->GetVelocity().x + B->GetVelocity().y;
-		const float MassSum = A->GetInverseMass() + B->GetInverseMass();
-
 		const float PenetrationDepthAllowance = 0.03f;
 		const float PenetrationCorrection = 3.0f;
 

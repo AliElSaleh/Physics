@@ -25,6 +25,7 @@ public:
 //	static bool AABBToAABB(Object* A, Object* B);
 	static bool AABBToAABB(Manifold* M);
 //	static bool CircleToCircle(Object* A, Object* B);
+	static bool CircleToAABB(Manifold* M);
 	static bool CircleToCircle(Manifold* M);
 //	static bool AABBToCircle(Object* A, Object* B);
 	static bool AABBToCircle(Manifold* M);

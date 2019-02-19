@@ -34,7 +34,7 @@ void Circle::Debug()
 
 void Circle::MakeGizmo()
 {
-	aie::Gizmos::add2DCircle(Location, Radius, 50, Color);
+	aie::Gizmos::add2DCircle(Location, Radius, 30, Color);
 
-	aie::Gizmos::add2DCircle(Location, 1.0f, 30, {0.0f, 1.0f, 0.0f, 1.0f});
+	aie::Gizmos::add2DCircle(Location, 0.5f, 30, {0.0f, 1.0f, 0.0f, 1.0f});
 }
