@@ -19,7 +19,7 @@ bool Physics2DEngine::Startup()
 	aie::Gizmos::create(255U, 255U, 65535U, 65535U);
 
 	PhysicsWorld = new World();
-	PhysicsWorld->Gravity = {0.0f, 0.0f};
+	PhysicsWorld->Gravity = {0.0f, -9.81f};
 	PhysicsWorld->TimeStep = 0.01f;
 
 	// Borders
@@ -52,18 +52,15 @@ bool Physics2DEngine::Startup()
 	//PhysicsWorld->AddActor(R);
 
 	// Circle vs Circle
-	//auto* C = new Circle({ -30.0f, 30.0f }, { 10.0f, 0.0f }, 8.0f, 10.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
-	//PhysicsWorld->AddActor(C);
-	//
-	//C = new Circle({ 30.0f, 40.0f }, { -20.0f, 0.0f }, 3.0f, 8.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
-	//PhysicsWorld->AddActor(C);
+	auto* C = new Circle({ -40.0f, 0.0f }, { 30.0f, 0.0f }, 8.0f, 15.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+	PhysicsWorld->AddActor(C);
 
 	// AABB vs Circle
 	//const auto R = new AABB({ -50.0f, 0.0f }, { 20.0f, 0.0f }, 10.0f, 20.0f, 6.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
 	//R->SetKinematic(false);
 	//PhysicsWorld->AddActor(R);
 	
-	const auto C = new Circle({ 30.0f, 0.0f }, { 0.0f, -20.0f }, 10.0f, 10.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
+	C = new Circle({ 30.0f, 0.0f }, { -30.0f, 0.0f }, 6.0f, 15.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
 	PhysicsWorld->AddActor(C);
 
 	// Circles

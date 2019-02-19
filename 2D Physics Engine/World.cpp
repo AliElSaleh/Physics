@@ -95,7 +95,7 @@ bool World::AABBToAABB(Manifold* M)
 
 		if (MaxDistance.x < 0 && MaxDistance.y < 0)
 		{
-			ResolveCollision(Rec1, Rec2);
+			ResolveCollision(M);
 			printf("AABBToAABB: Collided!\n");
 			return true;
 		}
@@ -181,17 +181,33 @@ bool World::CircleToCircle(Manifold* M)
 
 	if (C1 != nullptr && C2 != nullptr)
 	{
-		// The distance between the two circles
-		const glm::vec2 Distance = C2->GetLocation() - C1->GetLocation();
+		// Calculate the normal
+		const glm::vec2 Normal = C2->GetLocation() - C1->GetLocation();
+
+		const float DistanceSquared = LengthSquared(Normal);
 
 		float Radius = C1->GetRadius() + C2->GetRadius();
 		Radius *= Radius;
 
-		if (length(Distance) * length(Distance) > Radius)
+		// Check if circles are not contacting each other
+		if (DistanceSquared >= Radius)
 			return false;
 
-		ResolveCollision(C1, C2);
+		// We are in contact, calculate the distance and resolve collision
+		const float Distance = sqrtf(DistanceSquared);
 
+		if (Distance == 0.0f)
+		{
+			M->Penetration = C1->GetRadius();
+			M->Normal = {1.0f, 0.0f};
+		}
+		else
+		{
+			M->Penetration = Radius - Distance;
+			M->Normal = {Normal.x/Distance, Normal.y/Distance};
+		}
+
+		ResolveCollision(M);
 		return true ? printf("Circle: Collided!\n") : false;
 	}
 
@@ -222,9 +238,12 @@ bool World::AABBToCircle(Manifold* M)
 
 		const glm::vec2 Distance = Circle->GetLocation() - Closest;
 
-		if (Distance.x * Distance.x + Distance.y * Distance.y < Circle->GetRadius() * Circle->GetRadius())
+		if (LengthSquared(Distance) < Circle->GetRadius() * Circle->GetRadius())
 		{
-			ResolveCollision(Rec, Circle);
+			M->Penetration = Circle->GetRadius();
+			M->Normal = {CollisionNormal.x, -CollisionNormal.y};
+
+			ResolveCollision(M);
 			printf("AABBToCircle: Collided!\n");
 			return true;
 		}
@@ -279,7 +298,7 @@ bool World::AABBToCircle(Manifold* M)
 			M->Normal = CollisionNormal;
 			M->Penetration = Radius - D;
 
-			ResolveCollision(Rec, Circle);
+			ResolveCollision(M);
 			printf("AABBToCircle: Collided!\n");
 		}
 
@@ -296,70 +315,92 @@ float World::Distance(const glm::vec2 A, const glm::vec2 B)
 	return sqrtf((A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y));
 }
 
-void World::ResolveCollision(Object* const A, Object* const B)
+float World::LengthSquared(const glm::vec2 Vector)
 {
+	return (Vector.x*Vector.x + Vector.y*Vector.y);
+}
+
+void World::ResolveCollision(Manifold* M)
+{
+	const auto A = dynamic_cast<Object*>(M->A);
+	const auto B = dynamic_cast<Object*>(M->B);
+
+	if (A == nullptr && B == nullptr)
+		return;
+
 	const glm::vec2 RelativeVelocity = B->GetVelocity() - A->GetVelocity();
-	const glm::vec2 Normal = B->GetLocation() - A->GetLocation();
+	//const glm::vec2 Normal = B->GetLocation() - A->GetLocation();
 
-	float VelocityAlongNormal = dot(RelativeVelocity, Normal);
+	const float VelocityAlongNormal = dot(RelativeVelocity, M->Normal);
 
-	glm::vec2 PreviousVelocity{};
-
-	if (A->GetVelocity() != glm::zero<glm::vec2>())
-		PreviousVelocity = A->GetVelocity();
+	//glm::vec2 PreviousVelocity{};
+	//
+	//if (A->GetVelocity() != glm::zero<glm::vec2>())
+	//	PreviousVelocity = A->GetVelocity();
 
 	// Do not resolve if velocities are separating
 	if (VelocityAlongNormal > 0)
 		return;
 
-	if (B->IsKinematic())
-	{
-		VelocityAlongNormal = dot(PreviousVelocity, Normal);
-
-		// Calculate restitution
-		const float e = glm::min(A->GetRestitution(), B->GetRestitution());
-
-		// Calculate the impulse scalar
-		float j = -(1 + e) * VelocityAlongNormal;
-		j /= 1.0f / A->GetMass() + 1 / B->GetMass();
-
-		// Calculate the amount of force to apply depending on the object's mass
-		const glm::vec2 Impulse = j * Normal;
-
-		// Apply impulse
-		A->ApplyForce(A->GetInverseMass()*e * Impulse);
-	}
+	//if (B->IsKinematic())
+	//{
+	//	VelocityAlongNormal = dot(PreviousVelocity, M->Normal);
+	//
+	//	// Calculate restitution
+	//	const float e = glm::min(A->GetRestitution(), B->GetRestitution());
+	//
+	//	// Calculate the impulse scalar
+	//	float j = -(1 + e) * VelocityAlongNormal;
+	//	j /= 1.0f / A->GetMass() + 1 / B->GetMass();
+	//
+	//	// Calculate the amount of force to apply depending on the object's mass
+	//	const glm::vec2 Impulse = j * M->Normal;
+	//
+	//	// Apply impulse
+	//	A->ApplyForce(A->GetInverseMass()*e * Impulse);
+	//}
 
 	// Calculate restitution
 	const float e = glm::min(A->GetRestitution(), B->GetRestitution());
 
+	const float InverseMassSum = A->GetInverseMass() + B->GetInverseMass();
+
 	// Calculate the impulse scalar
 	float j = -(1 + e) * VelocityAlongNormal;
-	j /= 1.0f / A->GetMass() + 1 / B->GetMass();
+	j /= InverseMassSum;
 
 	// Calculate the amount of force to apply depending on the object's mass
-	const glm::vec2 Impulse = j * Normal;
+	const glm::vec2 ImpulseVector = {M->Normal.x*j, M->Normal.y*j};
 
-	const float MassSum = A->GetMass() + B->GetMass();
-	float Ratio = A->GetInverseMass() / MassSum;
+	if (!A->IsKinematic())
+		A->ApplyForce(A->GetInverseMass()*2*-ImpulseVector);
 
-	// Apply impulse
-	A->ApplyForce(-Ratio*2 * Impulse);
-	Ratio = B->GetInverseMass() / MassSum;
-	B->ApplyForce(Ratio*2 * Impulse);
+	if (!B->IsKinematic())
+		B->ApplyForce(B->GetInverseMass()*2*ImpulseVector);
 	
-	PositionalCorrection(A, B);
+	PositionalCorrection(M);
 }
 
-void World::PositionalCorrection(Object* A, Object* B)
+void World::PositionalCorrection(Manifold* M)
 {
-	const float Percent = 0.2f;
-	const float Slop = 0.01f;
-	const glm::vec2 Normal = B->GetLocation() - A->GetLocation();
-	const float PenetrationDepth = 0.05f;
+	auto A = dynamic_cast<Object*>(M->A);
+	auto B = dynamic_cast<Object*>(M->B);
 
-	const glm::vec2 Correction = glm::max(PenetrationDepth - Slop, 0.0f) / (A->GetInverseMass() + B->GetInverseMass()) * Percent * Normal;
+	if (A != nullptr && B != nullptr)
+	{
+		const float AverageVelocity = A->GetVelocity().x + A->GetVelocity().y + B->GetVelocity().x + B->GetVelocity().y;
+		const float MassSum = A->GetInverseMass() + B->GetInverseMass();
 
-	A->ApplyForce(-A->GetInverseMass() * Correction);
-	B->ApplyForce(B->GetInverseMass() * Correction);
+		const float PenetrationDepthAllowance = 0.03f;
+		const float PenetrationCorrection = 3.0f;
+
+		const glm::vec2 Correction = {glm::max(M->Penetration - PenetrationDepthAllowance, 0.0f)/(A->GetInverseMass() + B->GetInverseMass()) * M->Normal.x * PenetrationCorrection,
+									  glm::max(M->Penetration - PenetrationDepthAllowance, 0.0f)/(A->GetInverseMass() + B->GetInverseMass()) * M->Normal.y * PenetrationCorrection};
+
+		if (!A->IsKinematic())
+			A->ApplyForce(-Correction*A->GetInverseMass());
+
+		if (!B->IsKinematic())
+			B->ApplyForce(Correction*B->GetInverseMass());
+	}
 }

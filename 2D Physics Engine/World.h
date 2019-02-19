@@ -19,8 +19,8 @@ public:
 	void UpdateGizmos();
 
 	void CheckForCollisions();
-	static void ResolveCollision(Object* A, Object* B);
-	static void PositionalCorrection(Object* A, Object* B);
+	static void ResolveCollision(Manifold* M);
+	static void PositionalCorrection(Manifold* M);
 
 //	static bool AABBToAABB(Object* A, Object* B);
 	static bool AABBToAABB(Manifold* M);
@@ -36,5 +36,7 @@ public:
 
 private:
 	std::vector<Object*> Actors;
+
+	static float LengthSquared(glm::vec2 Vector);
 };
 
