@@ -2,8 +2,9 @@
 #include "AABB.h"
 #include "Circle.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <glm/ext.hpp>
+#include <glm/mat2x2.hpp>
 
 World::World() = default;
 World::~World() = default;
@@ -85,6 +86,8 @@ bool World::AABBToAABB(Manifold* M)
 
 	if (Rec1 != nullptr && Rec2 != nullptr)
 	{
+		M->ContactsCount = 0;
+
 		const glm::vec2 Distance1 = Rec2->GetMin() - Rec1->GetMax();
 		const glm::vec2 Distance2 = Rec1->GetMin() - Rec2->GetMax();
 		const glm::vec2 Distances = glm::vec2(max(Distance1, Distance2));
@@ -93,6 +96,7 @@ bool World::AABBToAABB(Manifold* M)
 
 		if (MaxDistance.x < 0 && MaxDistance.y < 0)
 		{
+			M->ContactsCount = 1;
 			M->Penetration = Rec1->GetWidth();
 			M->Normal = {1.0f,0.0f};
 
@@ -202,6 +206,8 @@ bool World::CircleToAABB(Manifold* M)
 	{
 		const glm::vec2 CollisionNormal = Circle->GetLocation() - Rec->GetLocation();
 
+		M->ContactsCount = 0;
+
 		// Closest Point of Rec to center of Circle
 		glm::vec2 Closest;
 
@@ -217,20 +223,21 @@ bool World::CircleToAABB(Manifold* M)
 
 		if (LengthSquared(Distance) < Circle->GetRadius() * Circle->GetRadius())
 		{
+			M->ContactsCount = 1;
 			M->Penetration = Circle->GetRadius();
-			M->Normal = CollisionNormal;
-
+			M->Normal = {CollisionNormal.x/3.0f, CollisionNormal.y/3.0f};
+		
 			ResolveCollision(M);
-
+		
 			if (Rec->IsKinematic())
 				printf("AABBToCircle (Kinematic): Collided!\n");
-
+		
 			if (Circle->IsKinematic())
 				printf("AABBToCircle (Kinematic): Collided!\n");
-
+		
 			if (!Rec->IsKinematic() && !Circle->IsKinematic())
 				printf("AABBToCircle: Collided!\n");
-
+		
 			return true;
 		}
 
@@ -264,7 +271,7 @@ bool World::CircleToAABB(Manifold* M)
 		}
 
 		const glm::vec2 Normal = CollisionNormal - Closest;
-		float D = length(Normal) * length(Normal);
+		float D = LengthSquared(Normal);
 		const float Radius = Circle->GetRadius();
 
 		// If the distance is greater than the radius squared, do nothing
@@ -276,12 +283,12 @@ bool World::CircleToAABB(Manifold* M)
 		// Collision normal needs to be flipped to point outside if circle was inside the AABB
 		if (bInside)
 		{
-			M->Normal = -CollisionNormal;
+			M->Normal = -Normal;
 			M->Penetration = Radius - D;	
 		}
 		else
 		{
-			M->Normal = CollisionNormal;
+			M->Normal = Normal;
 			M->Penetration = Radius - D;
 
 			ResolveCollision(M);
@@ -321,7 +328,10 @@ bool World::CircleToCircle(Manifold* M)
 
 		// Check if circles are not contacting each other
 		if (DistanceSquared >= Radius)
+		{
+			M->ContactsCount = 0;
 			return false;
+		}
 
 		// We are in contact, calculate the distance and resolve collision
 		const float Distance = sqrtf(DistanceSquared);
@@ -336,6 +346,8 @@ bool World::CircleToCircle(Manifold* M)
 			M->Penetration = Radius - Distance;
 			M->Normal = normalize(Normal);
 		}
+		
+		M->ContactsCount = 1;
 
 		ResolveCollision(M);
 
@@ -410,33 +422,37 @@ void World::ResolveCollision(Manifold* M)
 	if (A == nullptr && B == nullptr)
 		return;
 
-	const glm::vec2 RelativeVelocity = B->GetVelocity() - A->GetVelocity();
+	for (unsigned int i = 0; i < M->ContactsCount; i++)
+	{
+		const glm::vec2 RelativeVelocity = B->GetVelocity() - A->GetVelocity();
 
-	const float VelocityAlongNormal = dot(RelativeVelocity, M->Normal);
+		const float VelocityAlongNormal = dot(RelativeVelocity, M->Normal);
 
-	// Do not resolve if velocities are separating
-	if (VelocityAlongNormal > 0)
-		return;
+		// Do not resolve if velocities are separating
+		if (VelocityAlongNormal > 0)
+			return;
 
-	// Calculate restitution
-	const float e = glm::min(A->GetRestitution(), B->GetRestitution());
+		// Calculate restitution
+		const float e = glm::min(A->GetRestitution(), B->GetRestitution());
 
-	const float InverseMassSum = A->GetInverseMass() + B->GetInverseMass();
+		const float InverseMassSum = A->GetInverseMass() + B->GetInverseMass();
 
-	// Calculate the impulse scalar
-	float j = -(1 + e) * VelocityAlongNormal;
-	j /= InverseMassSum;
+		// Calculate the impulse scalar
+		float j = -(1 + e) * VelocityAlongNormal;
+		j /= InverseMassSum;
+		j /= M->ContactsCount;
 
-	// Calculate the amount of force to apply depending on the object's mass
-	const glm::vec2 ImpulseVector = {M->Normal.x*j, M->Normal.y*j};
+		// Calculate the amount of force to apply depending on the object's mass
+		const glm::vec2 ImpulseVector = {M->Normal.x*j, M->Normal.y*j};
 
-	if (!A->IsKinematic())
-		A->ApplyForce(A->GetInverseMass()*e*-ImpulseVector);
+		if (!A->IsKinematic())
+			A->ApplyForce(A->GetInverseMass()*e*-ImpulseVector);
 
-	if (!B->IsKinematic())
-		B->ApplyForce(B->GetInverseMass()*e*ImpulseVector);
-	
-	PositionalCorrection(M);
+		if (!B->IsKinematic())
+			B->ApplyForce(B->GetInverseMass()*e*ImpulseVector);
+		
+		PositionalCorrection(M);
+	}
 }
 
 void World::PositionalCorrection(Manifold* M)

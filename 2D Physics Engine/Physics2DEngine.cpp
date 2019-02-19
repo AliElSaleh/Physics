@@ -55,7 +55,7 @@ bool Physics2DEngine::Startup()
 	//PhysicsWorld->AddActor(C);
 
 	// AABB vs Circle
-	const auto R = new AABB({ -50.0f, 0.0f }, { 20.0f, 0.0f }, 10.0f, 20.0f, 8.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+	const auto R = new AABB({ -50.0f, 0.0f }, { 30.0f, 0.0f }, 10.0f, 20.0f, 8.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
 	R->SetKinematic(false);
 	PhysicsWorld->AddActor(R);
 	
@@ -65,7 +65,7 @@ bool Physics2DEngine::Startup()
 	// Circles
 	//for (int i = 0; i < 20; i++)
 	//{
-	//	const auto C = new Circle({ rand() % 60 - 60, rand() % 80 - 80}, { rand() % 10 + 1, rand() % 10 + 1 }, rand() % 6 + 1, rand() % 10 + 1, { rand() % 1 + 1, rand() % 1 + 1, rand() % 1 + 1, 1.0f });
+	//	const auto C = new Circle({ rand() % 60 - 60, rand() % 80 - 80}, { rand() % 10 + 1, rand() % 10 + 1 }, rand() % 6 + 1, rand() % 10 + 1, { 1, 0, 0, 1.0f });
 	//	PhysicsWorld->AddActor(C);
 	//}
 
