@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <glm/ext.hpp>
 #include <glm/mat2x2.hpp>
-
+#include "Gizmos.h"
 World::World() = default;
 World::~World() = default;
 
@@ -86,114 +86,124 @@ bool World::AABBToAABB(Manifold* M)
 
 	if (Rec1 != nullptr && Rec2 != nullptr)
 	{
-		M->ContactsCount = 0;
-
-		const glm::vec2 Distance1 = Rec2->GetMin() - Rec1->GetMax();
-		const glm::vec2 Distance2 = Rec1->GetMin() - Rec2->GetMax();
-		const glm::vec2 Distances = glm::vec2(max(Distance1, Distance2));
-
-		const glm::vec2 MaxDistance = max(Distances, Distances);
-
-		if (MaxDistance.x < 0 && MaxDistance.y < 0)
+		if (Rec1->GetLocation().x + Rec1->GetExtent().x > Rec2->GetLocation().x - Rec2->GetExtent().x &&
+			Rec1->GetLocation().x - Rec1->GetExtent().x < Rec2->GetLocation().x + Rec2->GetExtent().x &&
+			Rec1->GetLocation().y + Rec1->GetExtent().y > Rec2->GetLocation().y - Rec2->GetExtent().y &&
+			Rec1->GetLocation().y - Rec1->GetExtent().y < Rec2->GetLocation().y + Rec2->GetExtent().y)
 		{
+			glm::vec2 ContactPoint{};
+			glm::vec2 BigVector = max(Rec1->GetLocation(), Rec2->GetLocation());
+			glm::vec2 BigVectorExtent = max(Rec1->GetExtent(), Rec2->GetExtent());
+			glm::vec2 SmallVector = min(Rec1->GetLocation(), Rec2->GetLocation());
+			glm::vec2 SmallVectorExtent = min(Rec1->GetExtent(), Rec2->GetExtent());
+
+			if (BigVector.x + BigVectorExtent.x > SmallVector.x - SmallVectorExtent.x)
+			{
+				ContactPoint = {(Rec2->GetLocation().x + Rec2->GetExtent().x), Rec2->GetLocation().y};
+			}
+			else if (BigVector.x - BigVectorExtent.x < SmallVector.x + SmallVectorExtent.x)
+			{
+				ContactPoint = {(Rec2->GetLocation().x - Rec2->GetExtent().x), Rec2->GetLocation().y};
+			}
+			else if (BigVector.y + BigVectorExtent.y > SmallVector.y - SmallVectorExtent.y)
+			{
+				ContactPoint = {(Rec2->GetLocation().y + Rec2->GetExtent().y), Rec2->GetLocation().y};
+			}
+			else if (BigVector.y - BigVectorExtent.y < SmallVector.y + SmallVectorExtent.y)
+			{
+				ContactPoint = {(Rec2->GetLocation().y - Rec2->GetExtent().y), Rec2->GetLocation().y};
+			} 
+
+			aie::Gizmos::add2DCircle(ContactPoint, 1.0f, 20, {1.0f, 1.0f, 0.0f, 1.0f});
+
 			M->ContactsCount = 1;
-			M->Penetration = Rec1->GetWidth();
-			M->Normal = {1.0f,0.0f};
 
+			M->Normal = {-4.0f, 0.0f};
+
+			M->Penetration = Rec2->GetExtent().x;
+
+			//if (ContactPoint.x < 0)
+			//{
+			//	M->Penetration += glm::max(Rec1->GetExtent().x, Rec2->GetExtent().x);
+			//	M->Normal += glm::vec2(-1.0f, 0.0f);
+			//}
+			//else
+			//	M->Normal += glm::vec2(1.0f, 0.0f);
+			//
+			//if (ContactPoint.y < 0)
+			//{
+			//	M->Penetration += glm::min(Rec1->GetExtent().y, Rec2->GetExtent().y);
+			//	M->Normal += glm::vec2(0.0f, -1.0f);
+			//}
+			//else
+			//	M->Normal += glm::vec2(0.0f, 1.0f);
+			
 			ResolveCollision(M);
-
+			
 			if (Rec1->IsKinematic())
 				printf("AABBToAABB (Kinematic): Collided!\n");
-
+			
 			if (Rec2->IsKinematic())
 				printf("AABBToAABB (Kinematic): Collided!\n");
-
+			
 			if (!Rec1->IsKinematic() && !Rec2->IsKinematic())
 				printf("AABBToAABB: Collided!\n");
-
+			
 			return true;
 		}
 
-		if (Rec1 == nullptr && Rec2 != nullptr)
-			printf("AABBToAABB: Rec1 is null\n");
 
-		if (Rec1 != nullptr && Rec2 == nullptr)
-			printf("AABBToAABB: Rec2 is null\n");
 
-		if (Rec1 == nullptr && Rec2 == nullptr)
-			printf("AABBToAABB: Both of the objects were null\n");
 
-		return false;
 
-		// Exit with no intersection if found separated along each axis
-		//if (Rec1->GetMax().x < Rec2->GetMin().x || Rec1->GetMin().x > Rec2->GetMax().x)
-		//{
-		//	printf("AABB: Not Colliding!\n");
-		//	return false;
-		//}
-		//if (Rec1->GetMax().y < Rec2->GetMin().y || Rec1->GetMin().y > Rec2->GetMax().y)
-		//{
-		//	printf("AABB: Not Colliding!\n");
-		//	return false;
-		//}
+
+
+
+		//M->ContactsCount = 0;
 		//
-		//ResolveCollision(Rec1, Rec2);
+		//const glm::vec2 Distance1 = Rec2->GetMin() - Rec1->GetMax();
+		//const glm::vec2 Distance2 = Rec1->GetMin() - Rec2->GetMax();
+		//const glm::vec2 Distances = glm::vec2(max(Distance1, Distance2));
 		//
-		//// No separating axis found, at least one overlapping axis is intersecting
-		//return true ? printf("AABB: Collided!\n") : false;
+		//const glm::vec2 MaxDistance = max(Distances, Distances);
+		//
+		//const glm::vec2 Normal = {-(Rec2->GetLocation().y - Rec1->GetLocation().y),
+		//						  Rec2->GetLocation().x - Rec1->GetLocation().x};
+		//
+		//const glm::vec2 RelativeVelocity = Rec2->GetVelocity() - Rec1->GetVelocity();
+		//
+		//if (MaxDistance.x < 0 && MaxDistance.y < 0)
+		//{
+		//	M->ContactsCount = 1;
+		//	M->Penetration = Rec1->GetWidth()*2;
+		//
+		//	M->Normal = -normalize(Normal);
+		//
+		//	ResolveCollision(M);
+		//
+		//	if (Rec1->IsKinematic())
+		//		printf("AABBToAABB (Kinematic): Collided!\n");
+		//
+		//	if (Rec2->IsKinematic())
+		//		printf("AABBToAABB (Kinematic): Collided!\n");
+		//
+		//	if (!Rec1->IsKinematic() && !Rec2->IsKinematic())
+		//		printf("AABBToAABB: Collided!\n");
+		//
+		//	return true;
+		//}
 	}
 
-
-	//const glm::vec2 Distance = Rec2->GetLocation() - Rec1->GetLocation();
-	//
-	//// Calculate half extents along x axis for each object
-	//const float Rec1Extent = (Rec1->GetMax().x - Rec1->GetMin().x) / 2;
-	//const float Rec2Extent = (Rec2->GetMax().x - Rec2->GetMin().x) / 2;
-	//
-	//// Calculate overlap on x axis
-	//const float XOverlap = Rec1Extent + Rec2Extent - abs(Distance.x);
-	//
-	//// SAT test on x axis
-	//if (XOverlap > 0)
-	//{
-	//	// Calculate half extents along y axis for each object
-	//	const float Rec1Extent2 = (Rec1->GetMax().y - Rec1->GetMin().y) / 2;
-	//	const float Rec2Extent2 = (Rec2->GetMax().y - Rec2->GetMin().y) / 2;
-	//
-	//	// Calculate overlap on y axis
-	//	const float YOverlap = Rec1Extent2 + Rec2Extent2 - abs(Distance.y);
-	//
-	//	if (YOverlap > 0)
-	//	{
-	//		// Find out which axis is axis of least penetration
-	//		if (XOverlap > YOverlap)
-	//		{
-	//			// Points towards B knowing that Distance from Rec1 to Rec2
-	//			if (Distance.x < 0)
-	//				M->Normal = glm::vec2(-1.0f, 0.0f);
-	//			else
-	//				M->Normal = glm::vec2(0.0f, 0.0f);
-	//
-	//			M->Penetration = XOverlap;
-	//
-	//			ResolveCollision(Rec1, Rec2);
-	//			printf("AABB: Collided!\n");
-	//			return true;
-	//		}
-	//
-	//		if (Distance.y < 0)
-	//			M->Normal = glm::vec2(0.0f, -1.0f);
-	//		else
-	//			M->Normal = glm::vec2(0.0f, 1.0f);
-	//
-	//		M->Penetration = YOverlap;
-	//
-	//		ResolveCollision(Rec1, Rec2);
-	//		printf("AABB: Collided!\n");
-	//		return true;
-	//	}
-	//}
-
+	// Error checks
+	if (Rec1 == nullptr && Rec2 != nullptr)
+		printf("AABBToAABB: Rec1 is null\n");
+	
+	if (Rec1 != nullptr && Rec2 == nullptr)
+		printf("AABBToAABB: Rec2 is null\n");
+	
+	if (Rec1 == nullptr && Rec2 == nullptr)
+		printf("AABBToAABB: Both of the objects were null\n");
+	
 	return false;
 }
 
@@ -339,7 +349,7 @@ bool World::CircleToCircle(Manifold* M)
 		if (Distance == 0.0f)
 		{
 			M->Penetration = C1->GetRadius();
-			M->Normal = {1.0f, 0.0f};
+			M->Normal = normalize(Normal);
 		}
 		else
 		{
@@ -426,30 +436,36 @@ void World::ResolveCollision(Manifold* M)
 	{
 		const glm::vec2 RelativeVelocity = B->GetVelocity() - A->GetVelocity();
 
-		const float VelocityAlongNormal = dot(RelativeVelocity, M->Normal);
+		// Velocity along the normal
+		const float ContactVelocity = dot(RelativeVelocity, M->Normal);
+
+		const auto Perpendicular = glm::vec2(M->Normal.y, -M->Normal.x);
+
 
 		// Do not resolve if velocities are separating
-		if (VelocityAlongNormal > 0)
+		if (ContactVelocity > 0)
 			return;
 
 		// Calculate restitution
-		const float e = glm::min(A->GetRestitution(), B->GetRestitution());
+		const float e = glm::min(A->GetRestitution(), B->GetRestitution())/2.0f;
 
 		const float InverseMassSum = A->GetInverseMass() + B->GetInverseMass();
 
 		// Calculate the impulse scalar
-		float j = -(1 + e) * VelocityAlongNormal;
+		float j = -(1 + e) * ContactVelocity;
 		j /= InverseMassSum;
 		j /= M->ContactsCount;
 
 		// Calculate the amount of force to apply depending on the object's mass
-		const glm::vec2 ImpulseVector = {M->Normal.x*j, M->Normal.y*j};
+		const glm::vec2 ImpulseVector = j * M->Normal;
 
+		glm::vec2 Force = A->GetInverseMass()*-ImpulseVector;
 		if (!A->IsKinematic())
-			A->ApplyForce(A->GetInverseMass()*e*-ImpulseVector);
+			A->ApplyForce(Force);
 
+		Force = B->GetInverseMass()*ImpulseVector;
 		if (!B->IsKinematic())
-			B->ApplyForce(B->GetInverseMass()*e*ImpulseVector);
+			B->ApplyForce(Force);
 		
 		PositionalCorrection(M);
 	}
@@ -465,8 +481,7 @@ void World::PositionalCorrection(Manifold* M)
 		const float PenetrationDepthAllowance = 0.03f;
 		const float PenetrationCorrection = 3.0f;
 
-		const glm::vec2 Correction = {glm::max(M->Penetration - PenetrationDepthAllowance, 0.0f)/(A->GetInverseMass() + B->GetInverseMass()) * M->Normal.x * PenetrationCorrection,
-									  glm::max(M->Penetration - PenetrationDepthAllowance, 0.0f)/(A->GetInverseMass() + B->GetInverseMass()) * M->Normal.y * PenetrationCorrection};
+		const glm::vec2 Correction = glm::max(M->Penetration - PenetrationDepthAllowance, 0.0f)/(A->GetInverseMass() + B->GetInverseMass()) * M->Normal * PenetrationCorrection;
 
 		if (!A->IsKinematic())
 			A->ApplyForce(-Correction*A->GetInverseMass());
