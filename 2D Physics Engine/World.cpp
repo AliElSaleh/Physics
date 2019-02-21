@@ -5,7 +5,8 @@
 #include <cstdio>
 #include <glm/ext.hpp>
 #include <glm/mat2x2.hpp>
-#include "Gizmos.h"
+#include <stdio.h>
+
 World::World() = default;
 World::~World() = default;
 
@@ -91,52 +92,27 @@ bool World::AABBToAABB(Manifold* M)
 			Rec1->GetLocation().y + Rec1->GetExtent().y > Rec2->GetLocation().y - Rec2->GetExtent().y &&
 			Rec1->GetLocation().y - Rec1->GetExtent().y < Rec2->GetLocation().y + Rec2->GetExtent().y)
 		{
-			glm::vec2 ContactPoint{};
-			glm::vec2 BigVector = max(Rec1->GetLocation(), Rec2->GetLocation());
-			glm::vec2 BigVectorExtent = max(Rec1->GetExtent(), Rec2->GetExtent());
-			glm::vec2 SmallVector = min(Rec1->GetLocation(), Rec2->GetLocation());
-			glm::vec2 SmallVectorExtent = min(Rec1->GetExtent(), Rec2->GetExtent());
+			glm::vec2 CollisionNormal1;
 
-			if (BigVector.x + BigVectorExtent.x > SmallVector.x - SmallVectorExtent.x)
-			{
-				ContactPoint = {(Rec2->GetLocation().x + Rec2->GetExtent().x), Rec2->GetLocation().y};
-			}
-			else if (BigVector.x - BigVectorExtent.x < SmallVector.x + SmallVectorExtent.x)
-			{
-				ContactPoint = {(Rec2->GetLocation().x - Rec2->GetExtent().x), Rec2->GetLocation().y};
-			}
-			else if (BigVector.y + BigVectorExtent.y > SmallVector.y - SmallVectorExtent.y)
-			{
-				ContactPoint = {(Rec2->GetLocation().y + Rec2->GetExtent().y), Rec2->GetLocation().y};
-			}
-			else if (BigVector.y - BigVectorExtent.y < SmallVector.y + SmallVectorExtent.y)
-			{
-				ContactPoint = {(Rec2->GetLocation().y - Rec2->GetExtent().y), Rec2->GetLocation().y};
-			} 
+			const glm::vec2 Size = {fabsf(Rec1->GetWidth()), fabsf(Rec1->GetHeight()) };
 
-			aie::Gizmos::add2DCircle(ContactPoint, 1.0f, 20, {1.0f, 1.0f, 0.0f, 1.0f});
+			const glm::vec2 A = { fabsf(Size.x), fabsf(Size.y) };
+
+			const glm::vec2 S = { Rec1->GetLocation().x < Rec2->GetLocation().x ? -1.0f : 1.0f,
+							Rec1->GetLocation().y < Rec2->GetLocation().y ? -1.0f : 1.0f};
+
+			if (A.x <= A.y)
+				CollisionNormal1 = glm::vec2(S.x, 0.0f);
+			else
+				CollisionNormal1 = glm::vec2(0.f, S.y);
+
+			const glm::vec2 CollisionNormal2 = -CollisionNormal1;
 
 			M->ContactsCount = 1;
 
-			M->Normal = {-4.0f, 0.0f};
+			M->Normal = CollisionNormal2;
 
-			M->Penetration = Rec2->GetExtent().x;
-
-			//if (ContactPoint.x < 0)
-			//{
-			//	M->Penetration += glm::max(Rec1->GetExtent().x, Rec2->GetExtent().x);
-			//	M->Normal += glm::vec2(-1.0f, 0.0f);
-			//}
-			//else
-			//	M->Normal += glm::vec2(1.0f, 0.0f);
-			//
-			//if (ContactPoint.y < 0)
-			//{
-			//	M->Penetration += glm::min(Rec1->GetExtent().y, Rec2->GetExtent().y);
-			//	M->Normal += glm::vec2(0.0f, -1.0f);
-			//}
-			//else
-			//	M->Normal += glm::vec2(0.0f, 1.0f);
+			M->Penetration = length(Size) * Rec1->GetMass()/Rec2->GetMass();
 			
 			ResolveCollision(M);
 			
@@ -151,47 +127,6 @@ bool World::AABBToAABB(Manifold* M)
 			
 			return true;
 		}
-
-
-
-
-
-
-
-
-		//M->ContactsCount = 0;
-		//
-		//const glm::vec2 Distance1 = Rec2->GetMin() - Rec1->GetMax();
-		//const glm::vec2 Distance2 = Rec1->GetMin() - Rec2->GetMax();
-		//const glm::vec2 Distances = glm::vec2(max(Distance1, Distance2));
-		//
-		//const glm::vec2 MaxDistance = max(Distances, Distances);
-		//
-		//const glm::vec2 Normal = {-(Rec2->GetLocation().y - Rec1->GetLocation().y),
-		//						  Rec2->GetLocation().x - Rec1->GetLocation().x};
-		//
-		//const glm::vec2 RelativeVelocity = Rec2->GetVelocity() - Rec1->GetVelocity();
-		//
-		//if (MaxDistance.x < 0 && MaxDistance.y < 0)
-		//{
-		//	M->ContactsCount = 1;
-		//	M->Penetration = Rec1->GetWidth()*2;
-		//
-		//	M->Normal = -normalize(Normal);
-		//
-		//	ResolveCollision(M);
-		//
-		//	if (Rec1->IsKinematic())
-		//		printf("AABBToAABB (Kinematic): Collided!\n");
-		//
-		//	if (Rec2->IsKinematic())
-		//		printf("AABBToAABB (Kinematic): Collided!\n");
-		//
-		//	if (!Rec1->IsKinematic() && !Rec2->IsKinematic())
-		//		printf("AABBToAABB: Collided!\n");
-		//
-		//	return true;
-		//}
 	}
 
 	// Error checks
@@ -235,80 +170,23 @@ bool World::CircleToAABB(Manifold* M)
 		{
 			M->ContactsCount = 1;
 			M->Penetration = Circle->GetRadius();
-			M->Normal = {CollisionNormal.x/3.0f, CollisionNormal.y/3.0f};
-		
+			M->Normal = { CollisionNormal.x / 3.0f, CollisionNormal.y / 3.0f };
+
 			ResolveCollision(M);
-		
+
 			if (Rec->IsKinematic())
 				printf("AABBToCircle (Kinematic): Collided!\n");
-		
+
 			if (Circle->IsKinematic())
 				printf("AABBToCircle (Kinematic): Collided!\n");
-		
+
 			if (!Rec->IsKinematic() && !Circle->IsKinematic())
 				printf("AABBToCircle: Collided!\n");
-		
+
 			return true;
 		}
-
-		return false;
-
-		bool bInside = false;
-
-		// Circle is inside the AABB, so we need to clamp the circle's center to the closest edge
-		if (CollisionNormal == Closest)
-		{
-			bInside = true;
-
-			// Find the closest axis
-			if (fabs(CollisionNormal.x) > fabs(CollisionNormal.y))
-			{
-				// Clamp to closest extent
-				if (Closest.x > 0)
-					Closest.x = XExtent;
-				else
-					Closest.x = -XExtent;
-			}
-			// y axis is shorter
-			else
-			{
-				// Clamp to the closest extent
-				if (Closest.y > 0)
-					Closest.y = YExtent;
-				else
-					Closest.y = -YExtent;
-			}
-		}
-
-		const glm::vec2 Normal = CollisionNormal - Closest;
-		float D = LengthSquared(Normal);
-		const float Radius = Circle->GetRadius();
-
-		// If the distance is greater than the radius squared, do nothing
-		if (D > Radius * Radius && !bInside)
-			return false;
-
-		D = sqrtf(D);
-
-		// Collision normal needs to be flipped to point outside if circle was inside the AABB
-		if (bInside)
-		{
-			M->Normal = -Normal;
-			M->Penetration = Radius - D;	
-		}
-		else
-		{
-			M->Normal = Normal;
-			M->Penetration = Radius - D;
-
-			ResolveCollision(M);
-			printf("AABBToCircle: Collided!\n");
-		}
-
-		return true;
 	}
 
-	
 	if (Circle == nullptr && Rec != nullptr)
 		printf("CircleToAABB: Circle is null\n");
 
@@ -438,9 +316,6 @@ void World::ResolveCollision(Manifold* M)
 
 		// Velocity along the normal
 		const float ContactVelocity = dot(RelativeVelocity, M->Normal);
-
-		const auto Perpendicular = glm::vec2(M->Normal.y, -M->Normal.x);
-
 
 		// Do not resolve if velocities are separating
 		if (ContactVelocity > 0)

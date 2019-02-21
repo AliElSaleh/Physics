@@ -19,7 +19,7 @@ bool Physics2DEngine::Startup()
 	aie::Gizmos::create(255U, 255U, 65535U, 65535U);
 
 	PhysicsWorld = new World();
-	PhysicsWorld->Gravity = {0.0f, -9.81f};
+	PhysicsWorld->Gravity = {0.0f, -19.81f};
 	PhysicsWorld->TimeStep = 0.01f;
 
 	// Borders
@@ -44,7 +44,7 @@ bool Physics2DEngine::Startup()
 	PhysicsWorld->AddActor(B);
 
 	// AABB vs AABB
-	auto* R = new AABB({ -30.0f, 0.0f }, { -50.0f, 0.0f }, 10.0f, 20.0f, 8.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+	auto* R = new AABB({ -30.0f, 0.0f }, { 0.0f, -10.0f }, 10.0f, 20.0f, 8.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
 	PhysicsWorld->AddActor(R);
 
 	//R = new AABB({ 30.0f, -25.0f }, { -20.0f, 0.0f }, 5.0f, 30.0f, 6.0f, { 0.0f, 1.0f, 0.0f, 1.0f });
