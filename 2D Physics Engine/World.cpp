@@ -7,6 +7,8 @@
 #include <glm/mat2x2.hpp>
 #include <stdio.h>
 #include "Gizmos.h"
+#include "Plane.h"
+
 World::World() = default;
 World::~World() = default;
 
@@ -14,7 +16,8 @@ typedef bool(*CollisionFn)(Manifold*);
 
 static CollisionFn CollisionFunctionArray[] =
 {
-	World::AABBToAABB, World::CircleToAABB, World::CircleToCircle, World::AABBToCircle
+	World::AABBToAABB, World::CircleToAABB, World::AABBToPlane, World::CircleToPlane, World::PlaneToPlane,
+	World::AABBToCircle, World::CircleToCircle, World::PlaneToAABB, World::PlaneToCircle
 };
 
 void World::AddActor(Object* Actor)
@@ -150,14 +153,14 @@ bool World::CircleToAABB(Manifold* M)
 	if (Rec != nullptr && Circle != nullptr)
 	{
 		M->ContactsCount = 0;
-		
+
 		glm::vec2 PotentialCollision;
 		PotentialCollision.x = glm::clamp(Circle->GetLocation().x, Rec->GetMin().x, Rec->GetMax().x);
 		PotentialCollision.y = glm::clamp(Circle->GetLocation().y, Rec->GetMin().y, Rec->GetMax().y);
-		
+
 		// Closest Point of Rec to center of Circle
 		const glm::vec2 Closest = Circle->GetLocation() - PotentialCollision;
-		
+
 		const float Distance = length(Closest);
 
 		if (Distance < Circle->GetRadius())
@@ -165,20 +168,25 @@ bool World::CircleToAABB(Manifold* M)
 			M->ContactsCount = 1;
 			M->Penetration = Distance * Rec->GetMass() + Circle->GetMass();
 			M->Normal = normalize(Closest);
-		
+
 			ResolveCollision(M);
-		
+
 			if (Rec->IsKinematic())
 				printf("AABBToCircle (Kinematic): Collided!\n");
-		
+
 			if (Circle->IsKinematic())
 				printf("AABBToCircle (Kinematic): Collided!\n");
-		
+
 			if (!Rec->IsKinematic() && !Circle->IsKinematic())
 				printf("AABBToCircle: Collided!\n");
-		
+
 			return true;
 		}
+	}
+	else
+	{
+		AABBToCircle(M);
+		return true;
 	}
 
 	if (Circle == nullptr && Rec != nullptr)
@@ -189,6 +197,58 @@ bool World::CircleToAABB(Manifold* M)
 
 	if (Circle == nullptr && Rec == nullptr)
 		printf("CircleToAABB: Both of the objects were null\n");
+
+	return false;
+}
+
+bool World::AABBToPlane(Manifold* M)
+{
+	const auto Plane = dynamic_cast<::Plane*>(M->A);
+	const auto Rec = dynamic_cast<AABB*>(M->B);
+
+	if (Plane != nullptr && Rec != nullptr)
+	{
+		if (Rec->GetLocation().x + Rec->GetExtent().x > Plane->GetDistance() &&
+			Rec->GetLocation().x - Rec->GetExtent().x < Plane->GetDistance() &&
+			Rec->GetLocation().y + Rec->GetExtent().y > Plane->GetDistance() &&
+			Rec->GetLocation().y - Rec->GetExtent().y < Plane->GetDistance())
+		{
+			M->ContactsCount = 0;
+
+			glm::vec2 CollisionNormal = Plane->GetNormal();
+
+			float AABBToPlane = dot(Rec->GetLocation(), CollisionNormal) - Plane->GetDistance();
+
+			// If we are behind the plane, then flip the normal
+			if (AABBToPlane < 0)
+			{
+				CollisionNormal *= -1;
+				AABBToPlane *= -1;
+			}
+
+			const float Intersection = Rec->GetExtent().x - AABBToPlane;
+			if (Intersection > 0)
+			{
+				M->Penetration = Rec->GetMass();
+				M->Normal = CollisionNormal;
+
+				Plane->ResolveCollision(M);
+
+				printf("AABBToPlane: Collided!\n");
+
+				return true;
+			}
+		}
+	}
+
+	if (Rec == nullptr && Plane != nullptr)
+		printf("AABBToPlane: Rec is null\n");
+
+	if (Rec != nullptr && Plane == nullptr)
+		printf("AABBToPlane: Plane is null\n");
+
+	if (Rec == nullptr && Plane == nullptr)
+		printf("AABBToPlane: Both of the objects were null\n");
 
 	return false;
 }
@@ -257,6 +317,120 @@ bool World::CircleToCircle(Manifold* M)
 	return false;
 }
 
+bool World::CircleToPlane(Manifold* M)
+{
+	auto *P = dynamic_cast<Plane*>(M->A);
+	auto *C = dynamic_cast<Circle*>(M->B);
+
+	// If we are successful, then test for collision
+	if (C != nullptr && P != nullptr)
+	{
+		M->ContactsCount = 0;
+
+		glm::vec2 CollisionNormal = P->GetNormal();
+		float CircleToPlane = dot(C->GetLocation(), CollisionNormal) - P->GetDistance();
+		
+		// If we are behind the plane, then flip the normal
+		if (CircleToPlane < 0)
+		{
+			CollisionNormal *= -1;
+			CircleToPlane *= -1;
+		}
+		
+		const float Intersection = C->GetRadius() - CircleToPlane;
+		if (Intersection > 0)
+		{
+			M->ContactsCount = 1;
+			M->Penetration = C->GetMass();
+			M->Normal = CollisionNormal;
+		
+			P->ResolveCollision(M);
+		
+			printf("CircleToPlane: Collided!\n");
+		
+			return true;
+		}
+	}
+	else
+	{
+		PlaneToCircle(M);
+		return true;
+	}
+
+	// Error checks
+	if (C == nullptr && P != nullptr)
+		printf("CircleToPlane: Circle is null\n");
+
+	if (C != nullptr && P == nullptr)
+		printf("CircleToPlane: Plane is null\n");
+
+	if (C == nullptr && P == nullptr)
+		printf("CircleToPlane: Both of the objects were null\n");
+
+	return false;
+}
+
+bool World::PlaneToCircle(Manifold* M)
+{
+	auto *C = dynamic_cast<Circle*>(M->A);
+	auto *P = dynamic_cast<Plane*>(M->B);
+
+	if (C != nullptr && P != nullptr)
+	{
+		M->A = P;
+		M->B = C;
+
+		CircleToPlane(M);
+
+		return true;
+	}
+
+	// Error checks
+	if (C == nullptr && P != nullptr)
+		printf("CircleToPlane: Circle is null\n");
+
+	if (C != nullptr && P == nullptr)
+		printf("CircleToPlane: Plane is null\n");
+
+	if (C == nullptr && P == nullptr)
+		printf("CircleToPlane: Both of the objects were null\n");
+
+	return false;
+}
+
+bool World::PlaneToAABB(Manifold* M)
+{
+	auto *R = dynamic_cast<AABB*>(M->A);
+	auto *P = dynamic_cast<Plane*>(M->B);
+
+	if (R != nullptr && P != nullptr)
+	{
+		M->A = P;
+		M->B = R;
+
+		AABBToPlane(M);
+
+		return true;
+	}
+
+	// Error checks
+	if (R == nullptr && P != nullptr)
+		printf("PlaneToAABB: R is null\n");
+
+	if (R != nullptr && P == nullptr)
+		printf("PlaneToAABB: P is null\n");
+
+	if (R == nullptr && P == nullptr)
+		printf("PlaneToAABB: Both of the objects were null\n");
+
+	return false;
+}
+
+bool World::PlaneToPlane(Manifold* M)
+{
+	return false;
+}
+
 bool World::AABBToCircle(Manifold* M)
 {
 	const auto Circle = dynamic_cast<::Circle*>(M->A);
@@ -274,6 +448,7 @@ bool World::AABBToCircle(Manifold* M)
 		return true;
 	}
 
+	// Error checks
 	if (Circle == nullptr && Rec != nullptr)
 		printf("AABBToCircle: Circle is null\n");
 

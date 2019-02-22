@@ -6,7 +6,10 @@
 #include "Gizmos.h"
 
 #include <glm/gtc/matrix_transform.inl>
-
+#include "Plane.h"
+#include "../dependencies/glfw/include/GLFW/glfw3.h"
+#include <string>
+#include <string.h>
 Physics2DEngine::Physics2DEngine() = default;
 
 Physics2DEngine::~Physics2DEngine() = default;
@@ -15,6 +18,7 @@ bool Physics2DEngine::Startup()
 {
 	Renderer = new aie::Renderer2D();
 	Font = new aie::Font("../bin/font/consolas.ttf", 32);
+	FontSmall = new aie::Font("../bin/font/consolas.ttf", 24);
 
 	aie::Gizmos::create(255U, 255U, 65535U, 65535U);
 
@@ -43,31 +47,37 @@ bool Physics2DEngine::Startup()
 	B->SetKinematic(true);
 	PhysicsWorld->AddActor(B);
 
-	// AABB vs AABB
-	auto* R = new AABB({ -30.0f, 0.0f }, { 0.0f, -10.0f }, 10.0f, 20.0f, 8.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
-	PhysicsWorld->AddActor(R);
-
-	//R = new AABB({ 30.0f, -25.0f }, { -20.0f, 0.0f }, 5.0f, 30.0f, 6.0f, { 0.0f, 1.0f, 0.0f, 1.0f });
+	//const auto R = new AABB({ 0.0f, 0.0f }, { 10.0f, 0.0f }, 10, 20, 10.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
 	//PhysicsWorld->AddActor(R);
-	//
-	//// Circle vs Circle
-	//auto* C = new Circle({ -40.0f, 10.0f }, { 30.0f, 0.0f }, 8.0f, 15.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+
+	//const auto C = new Circle({ 0.0f, 0.0f }, { 70.0f, 0.0f }, 6.0f, 10.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
 	//PhysicsWorld->AddActor(C);
 
-	// AABB vs Circle
-	//const auto R = new AABB({ -20.0f, 10.0f }, { 0.0f, -30.0f }, 10.0f, 20.0f, 8.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
-	//R->SetKinematic(false);
-	//PhysicsWorld->AddActor(R);
-	//
-	//const auto C = new Circle({ 30.0f, 0.0f }, { -30.0f, 0.0f }, 6.0f, 10.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
-	//PhysicsWorld->AddActor(C);
+	// Plane
+	glm::vec2 Normal = { -0.65f, 0.75f };
+	PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
+
+	// Plane
+	Normal = { 0.65f, 0.75f };
+	PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
+
+	// AABBs
+	for (int i = 0; i < 5; i++)
+	{
+		const glm::vec2 Location = { rand() % 50, rand() % 50 };
+		const glm::vec2 Velocity = { rand() % 20 - 20, rand() % 20 - 20 };
+		const float Mass = rand() % 10;
+	
+		auto* R = new AABB(Location, Velocity, 3, 3, Mass, {1.0f, 1.0f, 0.0f, 1.0f});
+		PhysicsWorld->AddActor(R);
+	}
 
 	// Circles
-	for (int i = 0; i < 20; i++)
-	{
-		const auto C = new Circle({ rand() % 60 - 60, rand() % 80 - 80}, { rand() % 10 + 1, rand() % 10 + 1 }, rand() % 6 + 1, rand() % 10 + 1, { 1, 0, 0, 1.0f });
-		PhysicsWorld->AddActor(C);
-	}
+	//for (int i = 0; i < 20; i++)
+	//{
+	//	const auto C = new Circle({ rand() % 60 - 60, rand() % 80 - 80}, { rand() % 10 + 1, rand() % 10 + 1 }, rand() % 6 + 1, rand() % 10 + 1, { 1, 0, 0, 1.0f });
+	//	PhysicsWorld->AddActor(C);
+	//}
 
 	return true;
 }
@@ -82,6 +92,14 @@ void Physics2DEngine::Shutdown()
 void Physics2DEngine::Update(const float DeltaTime)
 {
 	aie::Input* input = aie::Input::getInstance();
+
+	char Result[10];
+
+	strcpy_s(Result, "FPS: ");
+	strcat_s(Result, std::to_string(GetFPS()).c_str());
+
+	
+	glfwSetWindowTitle(GetWindowPtr(), Result);
 
 	// Clear gizmos
 	aie::Gizmos::clear();
@@ -113,4 +131,6 @@ void Physics2DEngine::Draw()
 void Physics2DEngine::DrawText()
 {
 	Renderer->drawText(Font, "2D Physics Engine", 10, 10);
+	Renderer->drawText(Font, "Popcorn physics engine", float( GetWindowWidth()) / 2 - 200, float(GetWindowHeight()) / 2);
+	Renderer->drawText(FontSmall, "*World's first", float( GetWindowWidth()) / 2 - 110, float(GetWindowHeight()) / 2 - 30);
 }

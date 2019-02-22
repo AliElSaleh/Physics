@@ -22,12 +22,14 @@ public:
 	static void ResolveCollision(Manifold* M);
 	static void PositionalCorrection(Manifold* M);
 
-//	static bool AABBToAABB(Object* A, Object* B);
 	static bool AABBToAABB(Manifold* M);
-//	static bool CircleToCircle(Object* A, Object* B);
 	static bool CircleToAABB(Manifold* M);
+	static bool AABBToPlane(Manifold* M);
 	static bool CircleToCircle(Manifold* M);
-//	static bool AABBToCircle(Object* A, Object* B);
+	static bool CircleToPlane(Manifold* M);
+	static bool PlaneToCircle(Manifold* M);
+	static bool PlaneToAABB(Manifold* M);
+	static bool PlaneToPlane(Manifold* M);
 	static bool AABBToCircle(Manifold* M);
 
 	static float Distance(glm::vec2 A, glm::vec2 B);

@@ -4,7 +4,7 @@
 
 enum Geometry
 {
-	SQUARE, CIRCLE, LAST
+	SQUARE, CIRCLE, PLANE, LAST
 };
 
 static const float MIN_LINEAR_THRESHOLD = 0.1f;
@@ -24,8 +24,6 @@ public:
 	glm::vec2 GetLocation() const { return Location; }
 	glm::vec2 GetVelocity() const { return  Velocity; }
 	glm::vec2 GetNormal() const { return Normal; }
-
-	void SetNormal(const glm::vec2 Normal) { this->Normal = Normal; }
 
 	void SetKinematic(const bool State) { bIsKinematic = State; }
 	bool IsKinematic() const { return bIsKinematic; }

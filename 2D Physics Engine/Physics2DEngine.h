@@ -21,6 +21,7 @@ protected:
 
 	aie::Renderer2D* Renderer{};
 	aie::Font* Font{};
+	aie::Font* FontSmall{};
 
 	World* PhysicsWorld{};
 

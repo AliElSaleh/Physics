@@ -52,11 +52,11 @@ void AABB::MakeGizmo()
 	aie::Gizmos::add2DAABBFilled(Location, Extent, Color);
 
 	// The extent locations
-	aie::Gizmos::add2DCircle(Min, 1.0f, 30, { 0.0f, 1.0f, 0.0f, 1.0f });
-	aie::Gizmos::add2DCircle(Max, 1.0f, 30, { 0.0f, 1.0f, 0.0f, 1.0f });
-
-	// Location
-	aie::Gizmos::add2DCircle(Location, 0.5f, 30, {1.0f, 0.0f, 0.0f, 1.0f});
+	//aie::Gizmos::add2DCircle(Min, 1.0f, 30, { 0.0f, 1.0f, 0.0f, 1.0f });
+	//aie::Gizmos::add2DCircle(Max, 1.0f, 30, { 0.0f, 1.0f, 0.0f, 1.0f });
+	//
+	//// Location
+	//aie::Gizmos::add2DCircle(Location, 0.5f, 30, {1.0f, 0.0f, 0.0f, 1.0f});
 
 	// Lines at x and y
 	// aie::Gizmos::add2DLine(Location - Extent, Location + Extent, {1.0f, 1.0f, 1.0f, 1.0f});
