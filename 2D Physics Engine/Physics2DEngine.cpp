@@ -63,11 +63,11 @@ bool Physics2DEngine::Startup()
 	//PhysicsWorld->AddActor(C);
 
 	// Circles
-	//for (int i = 0; i < 20; i++)
-	//{
-	//	const auto C = new Circle({ rand() % 60 - 60, rand() % 80 - 80}, { rand() % 10 + 1, rand() % 10 + 1 }, rand() % 6 + 1, rand() % 10 + 1, { 1, 0, 0, 1.0f });
-	//	PhysicsWorld->AddActor(C);
-	//}
+	for (int i = 0; i < 20; i++)
+	{
+		const auto C = new Circle({ rand() % 60 - 60, rand() % 80 - 80}, { rand() % 10 + 1, rand() % 10 + 1 }, rand() % 6 + 1, rand() % 10 + 1, { 1, 0, 0, 1.0f });
+		PhysicsWorld->AddActor(C);
+	}
 
 	return true;
 }

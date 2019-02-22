@@ -6,7 +6,7 @@
 #include <glm/ext.hpp>
 #include <glm/mat2x2.hpp>
 #include <stdio.h>
-
+#include "Gizmos.h"
 World::World() = default;
 World::~World() = default;
 
@@ -112,7 +112,7 @@ bool World::AABBToAABB(Manifold* M)
 
 			M->Normal = CollisionNormal2;
 
-			M->Penetration = length(Size) * Rec1->GetMass()/Rec2->GetMass();
+			M->Penetration = length(Size) * Rec1->GetInverseMass()/Rec2->GetInverseMass();
 			
 			ResolveCollision(M);
 			
@@ -149,40 +149,34 @@ bool World::CircleToAABB(Manifold* M)
 
 	if (Rec != nullptr && Circle != nullptr)
 	{
-		const glm::vec2 CollisionNormal = Circle->GetLocation() - Rec->GetLocation();
-
 		M->ContactsCount = 0;
-
+		
+		glm::vec2 PotentialCollision;
+		PotentialCollision.x = glm::clamp(Circle->GetLocation().x, Rec->GetMin().x, Rec->GetMax().x);
+		PotentialCollision.y = glm::clamp(Circle->GetLocation().y, Rec->GetMin().y, Rec->GetMax().y);
+		
 		// Closest Point of Rec to center of Circle
-		glm::vec2 Closest;
+		const glm::vec2 Closest = Circle->GetLocation() - PotentialCollision;
+		
+		const float Distance = length(Closest);
 
-		// Calculate half extents along each axis
-		const float XExtent = (Rec->GetMax().x - Rec->GetMin().x) / 2;
-		const float YExtent = (Rec->GetMax().y - Rec->GetMin().y) / 2;
-
-		// Clamp point to edges of the AABB
-		Closest.x = glm::max(Rec->GetLocation().x - XExtent, glm::min(Circle->GetLocation().x, Rec->GetLocation().x + XExtent));
-		Closest.y = glm::max(Rec->GetLocation().y - YExtent, glm::min(Circle->GetLocation().y, Rec->GetLocation().y + YExtent));
-
-		const glm::vec2 Distance = Circle->GetLocation() - Closest;
-
-		if (LengthSquared(Distance) < Circle->GetRadius() * Circle->GetRadius())
+		if (Distance < Circle->GetRadius())
 		{
 			M->ContactsCount = 1;
-			M->Penetration = Circle->GetRadius();
-			M->Normal = { CollisionNormal.x / 3.0f, CollisionNormal.y / 3.0f };
-
+			M->Penetration = Distance * Rec->GetMass() + Circle->GetMass();
+			M->Normal = normalize(Closest);
+		
 			ResolveCollision(M);
-
+		
 			if (Rec->IsKinematic())
 				printf("AABBToCircle (Kinematic): Collided!\n");
-
+		
 			if (Circle->IsKinematic())
 				printf("AABBToCircle (Kinematic): Collided!\n");
-
+		
 			if (!Rec->IsKinematic() && !Circle->IsKinematic())
 				printf("AABBToCircle: Collided!\n");
-
+		
 			return true;
 		}
 	}
