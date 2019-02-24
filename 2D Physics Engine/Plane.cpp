@@ -41,8 +41,11 @@ void Plane::ResolveCollision(Manifold* M)
 {
 	const glm::vec2 RelativeVelocity = M->B->GetVelocity();
 
-	const float e = 1;
-	const float j = dot(-(1 + e) * RelativeVelocity, M->Normal) / (1 / M->B->GetMass());
+	// Calculate restitution
+	const float e = M->B->GetRestitution();
+
+	// Impulse scalar calculation
+	const float j = dot(-(1 + e) * RelativeVelocity, M->Normal) / (M->B->GetInverseMass());
 
 	const glm::vec2 Force = M->Normal * j;
 

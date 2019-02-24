@@ -47,7 +47,10 @@ bool Physics2DEngine::Startup()
 	B->SetKinematic(true);
 	PhysicsWorld->AddActor(B);
 
-	//const auto R = new AABB({ 0.0f, 0.0f }, { 10.0f, 0.0f }, 10, 20, 10.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+	//auto R = new AABB({ 0.0f, 0.0f }, { 0.0f, -20.0f }, 3, 3, 10.0f, { 1.0f, 1.0f, 0.0f, 1.0f });
+	//PhysicsWorld->AddActor(R);
+	//
+	//R = new AABB({ 0.0f, 40.0f }, { 0.0f, -10.0f }, 3, 3, 10.0f, { 1.0f, 1.0f, 0.0f, 1.0f });
 	//PhysicsWorld->AddActor(R);
 
 	//const auto C = new Circle({ 0.0f, 0.0f }, { 70.0f, 0.0f }, 6.0f, 10.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
@@ -56,7 +59,7 @@ bool Physics2DEngine::Startup()
 	// Plane
 	glm::vec2 Normal = { -0.65f, 0.75f };
 	PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
-
+	
 	// Plane
 	Normal = { 0.65f, 0.75f };
 	PhysicsWorld->AddActor(new Plane(Normal, -30.0f));

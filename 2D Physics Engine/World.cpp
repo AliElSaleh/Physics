@@ -4,8 +4,6 @@
 
 #include <cstdio>
 #include <glm/ext.hpp>
-#include <glm/mat2x2.hpp>
-#include <stdio.h>
 #include "Gizmos.h"
 #include "Plane.h"
 
@@ -95,25 +93,25 @@ bool World::AABBToAABB(Manifold* M)
 			Rec1->GetLocation().y + Rec1->GetExtent().y > Rec2->GetLocation().y - Rec2->GetExtent().y &&
 			Rec1->GetLocation().y - Rec1->GetExtent().y < Rec2->GetLocation().y + Rec2->GetExtent().y)
 		{
-			glm::vec2 CollisionNormal1;
+			M->ContactsCount = 0;
+
+			glm::vec2 CollisionNormal;
 
 			const glm::vec2 Size = {fabsf(Rec1->GetWidth()), fabsf(Rec1->GetHeight()) };
 
 			const glm::vec2 A = { fabsf(Size.x), fabsf(Size.y) };
 
-			const glm::vec2 S = { Rec1->GetLocation().x < Rec2->GetLocation().x ? -1.0f : 1.0f,
-							Rec1->GetLocation().y < Rec2->GetLocation().y ? -1.0f : 1.0f};
+			const glm::vec2 S = { Rec1->GetLocation().x < Rec2->GetLocation().x ? 1.0f : -1.0f,
+							Rec1->GetLocation().y < Rec2->GetLocation().y ? 1.0f : -1.0f};
 
-			if (A.x <= A.y)
-				CollisionNormal1 = glm::vec2(S.x, 0.0f);
+			if (A.x < A.y)
+				CollisionNormal = glm::vec2(S.x, 0.0f);
 			else
-				CollisionNormal1 = glm::vec2(0.f, S.y);
+				CollisionNormal = glm::vec2(0.f, S.y);
 
-			const glm::vec2 CollisionNormal2 = -CollisionNormal1;
+			M->ContactsCount++;
 
-			M->ContactsCount = 1;
-
-			M->Normal = CollisionNormal2;
+			M->Normal = CollisionNormal;
 
 			M->Penetration = length(Size) * Rec1->GetInverseMass()/Rec2->GetInverseMass();
 			
@@ -208,37 +206,37 @@ bool World::AABBToPlane(Manifold* M)
 
 	if (Plane != nullptr && Rec != nullptr)
 	{
-		if (Rec->GetLocation().x + Rec->GetExtent().x > Plane->GetDistance() &&
-			Rec->GetLocation().x - Rec->GetExtent().x < Plane->GetDistance() &&
-			Rec->GetLocation().y + Rec->GetExtent().y > Plane->GetDistance() &&
-			Rec->GetLocation().y - Rec->GetExtent().y < Plane->GetDistance())
+		M->ContactsCount = 0;
+
+		glm::vec2 CollisionNormal = Plane->GetNormal();
+
+		float AABBToPlane = dot(Rec->GetLocation(), CollisionNormal) - Plane->GetDistance();
+
+		// If we are behind the plane, then flip the normal
+		if (AABBToPlane < 0)
 		{
-			M->ContactsCount = 0;
-
-			glm::vec2 CollisionNormal = Plane->GetNormal();
-
-			float AABBToPlane = dot(Rec->GetLocation(), CollisionNormal) - Plane->GetDistance();
-
-			// If we are behind the plane, then flip the normal
-			if (AABBToPlane < 0)
-			{
-				CollisionNormal *= -1;
-				AABBToPlane *= -1;
-			}
-
-			const float Intersection = Rec->GetExtent().x - AABBToPlane;
-			if (Intersection > 0)
-			{
-				M->Penetration = Rec->GetMass();
-				M->Normal = CollisionNormal;
-
-				Plane->ResolveCollision(M);
-
-				printf("AABBToPlane: Collided!\n");
-
-				return true;
-			}
+			CollisionNormal *= -1;
+			AABBToPlane *= -1;
 		}
+
+		const float Intersection = Rec->GetExtent().x - AABBToPlane;
+		if (Intersection > 0)
+		{
+			M->ContactsCount = 1;
+			M->Penetration = 50.0f;//Rec->GetMass();
+			M->Normal = CollisionNormal;
+
+			Plane->ResolveCollision(M);
+
+			printf("AABBToPlane: Collided!\n");
+
+			return true;
+		}
+	}
+	else
+	{
+		PlaneToAABB(M);
+		return true;
 	}
 
 	if (Rec == nullptr && Plane != nullptr)
@@ -409,6 +407,8 @@ bool World::PlaneToAABB(Manifold* M)
 		M->B = R;
 
 		AABBToPlane(M);
+
+		M->Normal *= -1.0f;
 
 		return true;
 	}
