@@ -13,6 +13,7 @@ AABB::AABB(const glm::vec2 Location, const glm::vec2 Velocity, const float Width
 	this->Width = Extent.x * 2;
 	this->Height = Extent.y * 2;
 	this->Mass = Mass;
+	this->LinearDrag = 0.3f;
 
 	if (this->Mass == 0)
 		this->InverseMass = 0;

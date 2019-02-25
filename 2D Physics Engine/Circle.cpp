@@ -2,7 +2,7 @@
 #include "Gizmos.h"
 #include <glm/ext.hpp>
 
-#include <stdio.h>
+#include <cstdio>
 
 Circle::Circle(const glm::vec2 Location, const glm::vec2 Velocity, const float Radius, const float Mass, const glm::vec4 Color)
 	: Collider(CIRCLE)
@@ -11,6 +11,7 @@ Circle::Circle(const glm::vec2 Location, const glm::vec2 Velocity, const float R
 	this->Velocity = Velocity;
 	this->Radius = Radius;
 	this->Mass = Mass;
+	this->LinearDrag = 0.3f;
 	
 	if (this->Mass == 0)
 		this->InverseMass = 0;

@@ -38,6 +38,7 @@ protected:
 	float Mass{1.0f};
 	float InverseMass{ 1.0f / Mass };
 	float Restitution{0.6f};
+	float LinearDrag{1.0f};
 
 	glm::vec2 Location{};
 	glm::vec2 Velocity{1.0f, 1.0f};

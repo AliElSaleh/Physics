@@ -9,9 +9,8 @@
 #include "Plane.h"
 #include "../dependencies/glfw/include/GLFW/glfw3.h"
 #include <string>
-#include <string.h>
-Physics2DEngine::Physics2DEngine() = default;
 
+Physics2DEngine::Physics2DEngine() = default;
 Physics2DEngine::~Physics2DEngine() = default;
 
 bool Physics2DEngine::Startup()
@@ -53,8 +52,8 @@ bool Physics2DEngine::Startup()
 	//R = new AABB({ 0.0f, 40.0f }, { 0.0f, -10.0f }, 3, 3, 10.0f, { 1.0f, 1.0f, 0.0f, 1.0f });
 	//PhysicsWorld->AddActor(R);
 
-	//const auto C = new Circle({ 0.0f, 0.0f }, { 70.0f, 0.0f }, 6.0f, 10.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
-	//PhysicsWorld->AddActor(C);
+	const auto C = new Circle({ 0.0f, 10.0f }, { 0.0f, -10.0f }, 6.0f, 10.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
+	PhysicsWorld->AddActor(C);
 
 	// Plane
 	glm::vec2 Normal = { -0.65f, 0.75f };
