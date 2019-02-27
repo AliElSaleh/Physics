@@ -25,6 +25,9 @@ protected:
 
 	World* PhysicsWorld{};
 
+	Circle* Cue{};
+
+	glm::vec2 MouseLocation{};
 private:
 
 	void DrawText();

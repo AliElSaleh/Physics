@@ -14,6 +14,7 @@ AABB::AABB(const glm::vec2 Location, const glm::vec2 Velocity, const float Width
 	this->Height = Extent.y * 2;
 	this->Mass = Mass;
 	this->LinearDrag = 0.3f;
+	this->AngularDrag = 0.3f;
 
 	if (this->Mass == 0)
 		this->InverseMass = 0;
@@ -23,11 +24,14 @@ AABB::AABB(const glm::vec2 Location, const glm::vec2 Velocity, const float Width
 	this->Min = Location - Extent;
 	this->Max = Location + Extent;
 
+	this->AngularVelocity = 0.0f;
+	this->Moment = 1.0f;
+
 	this->Normal = normalize(Velocity);
 
 	this->Color = Color;
 
-	Shape = SQUARE;
+	Shape = Geometry::AABB;
 }
 
 AABB::~AABB() = default;

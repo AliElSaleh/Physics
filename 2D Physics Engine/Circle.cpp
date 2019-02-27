@@ -2,7 +2,9 @@
 #include "Gizmos.h"
 #include <glm/ext.hpp>
 
-#include <cstdio>
+#include <stdio.h>
+#include "Input.h"
+#include "imgui.h"
 
 Circle::Circle(const glm::vec2 Location, const glm::vec2 Velocity, const float Radius, const float Mass, const glm::vec4 Color)
 	: Collider(CIRCLE)
@@ -12,13 +14,18 @@ Circle::Circle(const glm::vec2 Location, const glm::vec2 Velocity, const float R
 	this->Radius = Radius;
 	this->Mass = Mass;
 	this->LinearDrag = 0.3f;
-	
+	this->AngularDrag = 0.3f;
+	this->Torque = 1.0f;
+
 	if (this->Mass == 0)
 		this->InverseMass = 0;
 	else
 		this->InverseMass = 1.0f / Mass;
 	
 	this->Normal = normalize(Velocity);
+
+	this->AngularVelocity = 0.0f;
+	this->Moment = 0.5f * Mass * Radius * Radius;
 
 	this->Color = Color;
 
@@ -35,7 +42,9 @@ void Circle::Debug()
 
 void Circle::MakeGizmo()
 {
+	// Circle
 	aie::Gizmos::add2DCircle(Location, Radius, 30, Color);
 
-	//aie::Gizmos::add2DCircle(Location, 0.5f, 30, {0.0f, 1.0f, 0.0f, 1.0f});
+	const glm::vec2 End = glm::vec2( cosf(Rotation), sinf(Rotation) ) * Radius;
+	aie::Gizmos::add2DLine(Location, Location + End, { 1.0f, 1.0f, 1.0f, 1.0f });
 }

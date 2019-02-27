@@ -51,6 +51,8 @@ void Plane::ResolveCollision(Manifold* M)
 
 	M->B->ApplyForce(Force);
 	PositionalCorrection(M);
+
+	M->B->bCollided = true;
 }
 
 void Plane::PositionalCorrection(Manifold* M)

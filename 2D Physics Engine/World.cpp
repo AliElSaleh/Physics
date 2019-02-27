@@ -1,11 +1,13 @@
 ﻿#include "World.h"
 #include "AABB.h"
 #include "Circle.h"
-
-#include <cstdio>
-#include <glm/ext.hpp>
 #include "Gizmos.h"
+
+#include <glm/ext.hpp>
 #include "Plane.h"
+#include <stdio.h>
+#include "Box.h"
+#include "Input.h"
 
 World::World() = default;
 World::~World() = default;
@@ -14,8 +16,8 @@ typedef bool(*CollisionFn)(Manifold*);
 
 static CollisionFn CollisionFunctionArray[] =
 {
-	World::AABBToAABB, World::CircleToAABB, World::AABBToPlane, World::CircleToPlane, World::PlaneToPlane,
-	World::AABBToCircle, World::CircleToCircle, World::PlaneToAABB, World::PlaneToCircle
+	World::AABBToAABB, World::AABBToBox, World::CircleToAABB, World::AABBToPlane, World::CircleToCircle, World::CircleToPlane,
+	World::PlaneToPlane, World::AABBToCircle, World::PlaneToAABB, World::PlaneToCircle, World::BoxToAABB
 };
 
 void World::AddActor(Object* Actor)
@@ -83,8 +85,8 @@ void World::CheckForCollisions()
 
 bool World::AABBToAABB(Manifold* M)
 {
-	const auto Rec1 = dynamic_cast<AABB*>(M->A);
-	const auto Rec2 = dynamic_cast<AABB*>(M->B);
+	const auto Rec1 = dynamic_cast<class AABB*>(M->A);
+	const auto Rec2 = dynamic_cast<class AABB*>(M->B);
 
 	if (Rec1 != nullptr && Rec2 != nullptr)
 	{
@@ -145,7 +147,7 @@ bool World::AABBToAABB(Manifold* M)
 
 bool World::CircleToAABB(Manifold* M)
 {
-	const auto Rec = dynamic_cast<AABB*>(M->A);
+	const auto Rec = dynamic_cast<class AABB*>(M->A);
 	const auto Circle = dynamic_cast<::Circle*>(M->B);
 
 	if (Rec != nullptr && Circle != nullptr)
@@ -202,7 +204,7 @@ bool World::CircleToAABB(Manifold* M)
 bool World::AABBToPlane(Manifold* M)
 {
 	const auto Plane = dynamic_cast<::Plane*>(M->A);
-	const auto Rec = dynamic_cast<AABB*>(M->B);
+	const auto Rec = dynamic_cast<class AABB*>(M->B);
 
 	if (Plane != nullptr && Rec != nullptr)
 	{
@@ -247,6 +249,36 @@ bool World::AABBToPlane(Manifold* M)
 
 	if (Rec == nullptr && Plane == nullptr)
 		printf("AABBToPlane: Both of the objects were null\n");
+
+	return false;
+}
+
+bool World::AABBToBox(Manifold* M)
+{
+	auto* Rec = dynamic_cast<class AABB*>(M->A);
+	auto* Box = dynamic_cast<::Box*>(M->B);
+
+	if (Box != nullptr && Rec != nullptr)
+	{
+		M->A = Box;
+		M->B = Rec;
+
+		BoxToAABB(M);
+
+		M->Normal *= -1.0f;
+
+		return true;
+	}
+
+	// Error checks
+	if (Box == nullptr && Rec != nullptr)
+		printf("AABBToBox: Box is null\n");
+
+	if (Box != nullptr && Rec == nullptr)
+		printf("AABBToBox: Rec is null\n");
+
+	if (Box == nullptr && Rec == nullptr)
+		printf("AABBToBox: Both of the objects were null\n");
 
 	return false;
 }
@@ -398,7 +430,7 @@ bool World::PlaneToCircle(Manifold* M)
 
 bool World::PlaneToAABB(Manifold* M)
 {
-	auto *R = dynamic_cast<AABB*>(M->A);
+	auto *R = dynamic_cast<class AABB*>(M->A);
 	auto *P = dynamic_cast<Plane*>(M->B);
 
 	if (R != nullptr && P != nullptr)
@@ -431,10 +463,60 @@ bool World::PlaneToPlane(Manifold* M)
 	return false;
 }
 
+bool World::BoxToAABB(Manifold* M)
+{
+	auto* Box = dynamic_cast<::Box*>(M->A);
+	auto* Rec = dynamic_cast<class AABB*>(M->B);
+
+	if (Box != nullptr && Rec != nullptr)
+	{
+		glm::vec2 RecLocation = Rec->GetLocation() - Box->GetLocation();
+
+		glm::vec2 Normal = glm::vec2(0.0f, 0.0f);
+		glm::vec2 Contact = glm::vec2(0.0f, 0.0f);
+
+		int NumOfContacts = 0;
+
+
+		//if ()
+		//{
+		//	Normal = -Normal;
+		//}
+
+		if (NumOfContacts > 0)
+		{
+			//const glm::vec2 ContactForce = 0.5f * (ContactForce1 - ContactForce2);
+
+			ResolveCollision(M);
+
+			printf("BoxToAABB: Collided!\n");
+
+			return true;
+		}
+	}
+	else
+	{
+		AABBToBox(M);
+		return true;
+	}
+
+	// Error checks
+	if (Box == nullptr && Rec != nullptr)
+		printf("BoxToAABB: Box is null\n");
+
+	if (Box != nullptr && Rec == nullptr)
+		printf("BoxToAABB: Rec is null\n");
+
+	if (Box == nullptr && Rec == nullptr)
+		printf("BoxToAABB: Both of the objects were null\n");
+
+	return false;
+}
+
 bool World::AABBToCircle(Manifold* M)
 {
 	const auto Circle = dynamic_cast<::Circle*>(M->A);
-	const auto Rec = dynamic_cast<AABB*>(M->B);
+	const auto Rec = dynamic_cast<class AABB*>(M->B);
 
 	if (Circle != nullptr && Rec != nullptr)
 	{
