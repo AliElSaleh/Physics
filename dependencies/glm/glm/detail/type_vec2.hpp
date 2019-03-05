@@ -46,6 +46,8 @@ namespace glm
 				struct{ T r, g; };
 				struct{ T s, t; };
 
+				T AsArray[2];
+
 #				if GLM_SWIZZLE == GLM_SWIZZLE_ENABLED
 					GLM_SWIZZLE2_2_MEMBERS(T, P, x, y)
 					GLM_SWIZZLE2_2_MEMBERS(T, P, r, g)
@@ -380,6 +382,7 @@ namespace glm
 
 	template<precision P>
 	GLM_FUNC_DECL vec<2, bool, P> operator||(vec<2, bool, P> const & v1, vec<2, bool, P> const & v2);
+
 }//namespace glm
 
 #ifndef GLM_EXTERNAL_TEMPLATE

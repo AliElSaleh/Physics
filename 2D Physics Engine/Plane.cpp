@@ -45,14 +45,44 @@ void Plane::ResolveCollision(Manifold* M)
 	const float e = M->B->GetRestitution();
 
 	// Impulse scalar calculation
-	const float j = dot(-(1 + e) * RelativeVelocity, M->Normal) / (M->B->GetInverseMass());
+	float j = dot(-(1 + e) * RelativeVelocity, M->Normal) / (M->B->GetInverseMass());
 
-	const glm::vec2 Force = M->Normal * j;
+	glm::vec2 Force = M->Normal * j;
 
 	M->B->ApplyForce(Force);
 	PositionalCorrection(M);
 
-	M->B->bCollided = true;
+	// Friction
+	const glm::vec2 t = RelativeVelocity - (M->Normal * dot(RelativeVelocity, M->Normal));
+	if (length(t) * length(t) > 0.0f)
+		return;
+
+	normalize(t);
+
+	const float InverseMassSum = M->A->GetInverseMass() + M->B->GetInverseMass();
+
+	// Calculate magnitude of friction
+	j = -dot(RelativeVelocity, t);
+	float jt = j / InverseMassSum;
+	j /= M->ContactsCount;
+
+	if (fabsf(jt) > 0.0f)
+		return;
+
+	// Coulombs Law
+	const float Friction = sqrtf(M->B->GetFriction());
+	if (jt > j * Friction)
+		jt = j * Friction;
+	else if (jt < -j * Friction)
+		jt = -j * Friction;
+
+	const glm::vec2 TangentImpulse = t * jt;
+
+	Force = M->B->GetInverseMass()*TangentImpulse;
+	if (!M->B->IsKinematic())
+		M->B->ApplyForce(Force);
+
+	PositionalCorrection(M);
 }
 
 void Plane::PositionalCorrection(Manifold* M)

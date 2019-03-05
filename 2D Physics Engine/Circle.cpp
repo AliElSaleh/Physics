@@ -3,8 +3,6 @@
 #include <glm/ext.hpp>
 
 #include <stdio.h>
-#include "Input.h"
-#include "imgui.h"
 
 Circle::Circle(const glm::vec2 Location, const glm::vec2 Velocity, const float Radius, const float Mass, const glm::vec4 Color)
 	: Collider(CIRCLE)
@@ -45,6 +43,6 @@ void Circle::MakeGizmo()
 	// Circle
 	aie::Gizmos::add2DCircle(Location, Radius, 30, Color);
 
-	const glm::vec2 End = glm::vec2( cosf(Rotation), sinf(Rotation) ) * Radius;
+	const glm::vec2 End = glm::vec2(cosf(Rotation), sinf(Rotation)) * Radius;
 	aie::Gizmos::add2DLine(Location, Location + End, { 1.0f, 1.0f, 1.0f, 1.0f });
 }

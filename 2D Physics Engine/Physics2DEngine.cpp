@@ -25,32 +25,38 @@ bool Physics2DEngine::Startup()
 	aie::Gizmos::create(255U, 255U, 65535U, 65535U);
 
 	PhysicsWorld = new World();
-	PhysicsWorld->Gravity = {0.0f, -19.0f};
+	PhysicsWorld->Gravity = {0.0f, -19.81f};
 	PhysicsWorld->TimeStep = 0.01f;
-
+	
 	// Borders
 	// Left
-	//auto B = new class AABB({ -90.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
-	//B->SetKinematic(true);
-	//PhysicsWorld->AddActor(B);
-	//
-	//// Right
-	//B = new class AABB({ 90.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
-	//B->SetKinematic(true);
-	//PhysicsWorld->AddActor(B);
-	//
+	auto B = new class AABB({ -95.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
+	B->SetKinematic(true);
+	PhysicsWorld->AddActor(B);
+	
+	// Right
+	B = new class AABB({ 95.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
+	B->SetKinematic(true);
+	PhysicsWorld->AddActor(B);
+	
 	//// Top
 	//B = new class AABB({ 0.0f, 50.0f }, { 0.0f, 0.0f }, 180.0f, 5.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
 	//B->SetKinematic(true);
 	//PhysicsWorld->AddActor(B);
-	//
-	//// Bottom
-	//B = new class AABB({ 0.0f, -50.0f }, { 0.0f, 0.0f }, 180.0f, 5.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
-	//B->SetKinematic(true);
-	//PhysicsWorld->AddActor(B);
+	
+	// Bottom
+	B = new class AABB({ 0.0f, -50.0f }, { 0.0f, 0.0f }, 180.0f, 5.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
+	B->SetKinematic(true);
+	PhysicsWorld->AddActor(B);
 
-	// Box
-	//const auto R = new Box({ 0.0f, 0.0f }, { 20.0f, -10.0f }, 20.0f, 20.0f, 10.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+	// Boxes
+	//for (int i = 0; i < 10; i++)
+	//{
+	//	auto R = new Box({ rand() % 40, rand() % 70 - 20 }, { 0.0f, 0.0f }, {1.0f, 1.0f}, rand() % 360, 10.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+	//	PhysicsWorld->AddActor(R);
+	//}
+
+	//auto R = new Box({ 20.0f, 20.0f }, { -20.0f, -10.0f }, {10.0f, 5.0f}, 0.0f, 10.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
 	//PhysicsWorld->AddActor(R);
 
 	//auto R = new AABB({ 0.0f, 0.0f }, { 0.0f, -20.0f }, 3, 3, 10.0f, { 1.0f, 1.0f, 0.0f, 1.0f });
@@ -63,12 +69,12 @@ bool Physics2DEngine::Startup()
 	//PhysicsWorld->AddActor(C);
 
 	// Plane
-	glm::vec2 Normal = { -0.65f, 0.75f };
-	PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
-	
-	// Plane
-	Normal = { 0.65f, 0.75f };
-	PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
+	//glm::vec2 Normal = { -0.65f, 0.75f };
+	//PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
+	//
+	//// Plane
+	//Normal = { 0.65f, 0.75f };
+	//PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
 
 	// AABBs
 	//for (int i = 0; i < 5; i++)
@@ -81,52 +87,52 @@ bool Physics2DEngine::Startup()
 	//	PhysicsWorld->AddActor(R);
 	//}
 
-	float XOffset = -50;
-	float YOffset = 6;
-
-	// First row
-	for (int i = 0; i < 4; i++)
-	{
-		const auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-		YOffset -= 6;
-		PhysicsWorld->AddActor(C);
-	}
-	
-	XOffset = -44;
-	YOffset = 3;
-	
-	// Second row
-	for (int i = 0; i < 3; i++)
-	{
-		const auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-		YOffset -= 6;
-		PhysicsWorld->AddActor(C);
-	}
-	
-	XOffset = -38;
-	YOffset = 0;
-	
-	// Third row
-	for (int i = 0; i < 2; i++)
-	{
-		const auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-		YOffset -= 6;
-		PhysicsWorld->AddActor(C);
-	}
-	
-	XOffset = -32;
-	YOffset = -3;
-	
-	// Final row
-	auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-	PhysicsWorld->AddActor(C);
-
-	// Cue
-	Cue = new Circle({ 50.0f, -3.0f }, { 0.0f, 0.0f }, 3.0f, 5.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
-	PhysicsWorld->AddActor(Cue);
-
+	//float XOffset = -50;
+	//float YOffset = 6;
+	//
+	//// First row
+	//for (int i = 0; i < 4; i++)
+	//{
+	//	const auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+	//	YOffset -= 6;
+	//	PhysicsWorld->AddActor(C);
+	//}
+	//
+	//XOffset = -44;
+	//YOffset = 3;
+	//
+	//// Second row
+	//for (int i = 0; i < 3; i++)
+	//{
+	//	const auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+	//	YOffset -= 6;
+	//	PhysicsWorld->AddActor(C);
+	//}
+	//
+	//XOffset = -38;
+	//YOffset = 0;
+	//
+	//// Third row
+	//for (int i = 0; i < 2; i++)
+	//{
+	//	const auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+	//	YOffset -= 6;
+	//	PhysicsWorld->AddActor(C);
+	//}
+	//
+	//XOffset = -32;
+	//YOffset = -3;
+	//
+	//// Final row
+	//auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+	//PhysicsWorld->AddActor(C);
+	//
+	//// Cue
+	//Cue = new Circle({ 50.0f, -3.0f }, { 0.0f, 0.0f }, 3.0f, 5.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+	//PhysicsWorld->AddActor(Cue);
+	//
 	// Circles
-	for (int i = 0; i < 30; i++)
+	for (int i = 0; i < 20; i++)
 	{
 		const auto C = new Circle({ rand() % 30, rand() % 80 - 40}, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
 		PhysicsWorld->AddActor(C);
@@ -158,23 +164,37 @@ void Physics2DEngine::Update(const float DeltaTime)
 
 	PhysicsWorld->Update(DeltaTime);
 
-	// Check if mouse is intersecting the cue ball
-	if (Input->isKeyDown(aie::INPUT_KEY_A))
-		Cue->ApplyForce({ -10.0f, 0.0f });
-
-	if (Input->isKeyDown(aie::INPUT_KEY_D))
-		Cue->ApplyForce({ 10.0f, 0.0f });
-
-	if (Input->isKeyDown(aie::INPUT_KEY_W))
-		Cue->ApplyForce({ 0.0f, 10.0f });
-
-	if (Input->isKeyDown(aie::INPUT_KEY_S))
-		Cue->ApplyForce({ 0.0f, -10.0f });
-
 	int x, y;
 	Input->getMouseXY(&x, &y);
-
+	
 	MouseLocation = glm::vec2( x, y );
+
+	MouseLocation.x = glm::clamp(MouseLocation.x, -100.0f, 100.0f);
+	MouseLocation.y = glm::clamp(MouseLocation.y, -100.0f, 100.0f);
+
+	if (Input->wasKeyPressed(aie::INPUT_KEY_SPACE))
+	{
+		const auto C = new Circle({0.0f, 0.0f}, { 0.0f, -10.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+		PhysicsWorld->AddActor(C);
+	}
+
+	// Check if mouse is intersecting the cue ball
+	//if (Input->isKeyDown(aie::INPUT_KEY_A))
+	//	Cue->ApplyForce({ -10.0f, 0.0f });
+	//
+	//if (Input->isKeyDown(aie::INPUT_KEY_D))
+	//	Cue->ApplyForce({ 10.0f, 0.0f });
+	//
+	//if (Input->isKeyDown(aie::INPUT_KEY_W))
+	//	Cue->ApplyForce({ 0.0f, 10.0f });
+	//
+	//if (Input->isKeyDown(aie::INPUT_KEY_S))
+	//	Cue->ApplyForce({ 0.0f, -10.0f });
+	//
+	//int x, y;
+	//Input->getMouseXY(&x, &y);
+	//
+	//MouseLocation = glm::vec2( x, y );
 
 	PhysicsWorld->UpdateGizmos();
 

@@ -10,16 +10,6 @@ void Object::ApplyForce(const glm::vec2 Force)
 	AngularVelocity += (Force.y * Location.x - Force.x * Location.y) / Moment;
 }
 
-float Object::Cross(const glm::vec2 A, const glm::vec2 B)
-{
-	return A.x * B.y - A.y * B.x;
-}
-
-glm::vec2 Object::Cross(const float S, const glm::vec2 A)
-{
-	return glm::vec2(-S * A.y, S* A.x);
-}
-
 void Object::FixedUpdate(const glm::vec2 Gravity, const float TimeStep)
 {
 	if (bIsKinematic)
@@ -33,14 +23,14 @@ void Object::FixedUpdate(const glm::vec2 Gravity, const float TimeStep)
 
 	ApplyForce(Gravity * Mass * TimeStep);
 	Location += Velocity * TimeStep;
-	Velocity -= Velocity * LinearDrag * TimeStep;
+	Velocity -= Velocity * Friction * LinearDrag * TimeStep;
 
 	Rotation += AngularVelocity * TimeStep;
-	AngularVelocity -= AngularVelocity * AngularDrag * TimeStep;
+	AngularVelocity -= AngularDrag * AngularDrag * TimeStep;
 
 	if (length(Velocity) < MIN_LINEAR_THRESHOLD)
 		Velocity = glm::vec2(0.0f, 0.0f);
 	
-	if (abs(AngularVelocity) < MIN_ROTATION_THRESHOLD)
+	if (fabs(AngularVelocity) > MIN_ROTATION_THRESHOLD)
 		AngularVelocity = 0.0f;
 }

@@ -5,7 +5,7 @@
 
 #include <glm/ext.hpp>
 #include "Plane.h"
-#include <stdio.h>
+#include <cstdio>
 #include "Box.h"
 #include "Input.h"
 
@@ -16,8 +16,8 @@ typedef bool(*CollisionFn)(Manifold*);
 
 static CollisionFn CollisionFunctionArray[] =
 {
-	World::AABBToAABB, World::AABBToBox, World::CircleToAABB, World::AABBToPlane, World::CircleToCircle, World::CircleToPlane,
-	World::PlaneToPlane, World::AABBToCircle, World::PlaneToAABB, World::PlaneToCircle, World::BoxToAABB
+	World::AABBToAABB, World::AABBToBox, World::CircleToAABB, World::BoxToCircle, World::BoxToPlane, World::CircleToPlane, World::PlaneToPlane,
+	World::PlaneToCircle, World::CircleToCircle, World::AABBToPlane, World::AABBToCircle, World::BoxToBox, World::PlaneToAABB, World::BoxToAABB
 };
 
 void World::AddActor(Object* Actor)
@@ -154,31 +154,33 @@ bool World::CircleToAABB(Manifold* M)
 	{
 		M->ContactsCount = 0;
 
-		glm::vec2 PotentialCollision;
-		PotentialCollision.x = glm::clamp(Circle->GetLocation().x, Rec->GetMin().x, Rec->GetMax().x);
-		PotentialCollision.y = glm::clamp(Circle->GetLocation().y, Rec->GetMin().y, Rec->GetMax().y);
+		const glm::vec2 Min = Rec->GetMin();
+		const glm::vec2 Max = Rec->GetMax();
 
-		// Closest Point of Rec to center of Circle
-		const glm::vec2 Closest = Circle->GetLocation() - PotentialCollision;
+		// Find the closest point on the rectangle
+		glm::vec2 ClosestPoint;
 
-		const float Distance = length(Closest);
+		ClosestPoint.x = glm::clamp(Circle->GetLocation().x, Min.x, Max.x);
+		ClosestPoint.y = glm::clamp(Circle->GetLocation().y, Min.y, Max.y);
 
-		if (Distance < Circle->GetRadius())
+		const glm::vec2 Distance = Circle->GetLocation() - ClosestPoint;
+
+		if (LengthSquared(Distance) < Circle->GetRadius() * Circle->GetRadius())
 		{
 			M->ContactsCount = 1;
-			M->Penetration = Distance * Rec->GetMass() + Circle->GetMass();
-			M->Normal = normalize(Closest);
+			M->Penetration = Circle->GetRadius() * Circle->GetRadius();
+			M->Normal = normalize(Distance);
 
 			ResolveCollision(M);
 
 			if (Rec->IsKinematic())
-				printf("AABBToCircle (Kinematic): Collided!\n");
+				printf("CircleToAABB (Kinematic): Collided!\n");
 
 			if (Circle->IsKinematic())
-				printf("AABBToCircle (Kinematic): Collided!\n");
+				printf("CircleToAABB (Kinematic): Collided!\n");
 
 			if (!Rec->IsKinematic() && !Circle->IsKinematic())
-				printf("AABBToCircle: Collided!\n");
+				printf("CircleToAABB: Collided!\n");
 
 			return true;
 		}
@@ -295,44 +297,31 @@ bool World::CircleToCircle(Manifold* M)
 
 		const float DistanceSquared = LengthSquared(Normal);
 
-		float Radius = C1->GetRadius() + C2->GetRadius();
-		Radius *= Radius;
+		float RadiiSum = C1->GetRadius() + C2->GetRadius();
+		RadiiSum *= RadiiSum;
 
-		// Check if circles are not contacting each other
-		if (DistanceSquared >= Radius)
-		{
-			M->ContactsCount = 0;
+		if (DistanceSquared > RadiiSum)
 			return false;
-		}
 
-		// We are in contact, calculate the distance and resolve collision
-		const float Distance = sqrtf(DistanceSquared);
-
-		if (Distance == 0.0f)
+		if (DistanceSquared <= RadiiSum)
 		{
-			M->Penetration = C1->GetRadius();
+			M->ContactsCount = 1;
+			M->Penetration = RadiiSum - DistanceSquared;
 			M->Normal = normalize(Normal);
+
+			ResolveCollision(M);
+
+			if (C1->IsKinematic())
+				printf("Circle (Kinematic): Collided!\n");
+
+			if (C2->IsKinematic())
+				printf("Circle (Kinematic): Collided!\n");
+
+			if (!C1->IsKinematic() && !C2->IsKinematic())
+				printf("Circle: Collided!\n");
+
+			return true;
 		}
-		else
-		{
-			M->Penetration = Radius - Distance;
-			M->Normal = normalize(Normal);
-		}
-		
-		M->ContactsCount = 1;
-
-		ResolveCollision(M);
-
-		if (C1->IsKinematic())
-			printf("Circle (Kinematic): Collided!\n");
-
-		if (C2->IsKinematic())
-			printf("Circle (Kinematic): Collided!\n");
-
-		if (!C1->IsKinematic() && !C2->IsKinematic())
-			printf("Circle: Collided!\n");
-
-		return true;
 	}
 
 	if (C1 == nullptr && C2 != nullptr)
@@ -371,7 +360,7 @@ bool World::CircleToPlane(Manifold* M)
 		if (Intersection > 0)
 		{
 			M->ContactsCount = 1;
-			M->Penetration = C->GetMass();
+			M->Penetration = CircleToPlane;
 			M->Normal = CollisionNormal;
 		
 			P->ResolveCollision(M);
@@ -396,6 +385,36 @@ bool World::CircleToPlane(Manifold* M)
 
 	if (C == nullptr && P == nullptr)
 		printf("CircleToPlane: Both of the objects were null\n");
+
+	return false;
+}
+
+bool World::CircleToBox(Manifold * M)
+{
+	auto *Circle = dynamic_cast<::Circle*>(M->A);
+	auto *Box = dynamic_cast<::Box*>(M->B);
+
+	if (Circle != nullptr && Box != nullptr)
+	{
+		M->A = Box;
+		M->B = Circle;
+
+		BoxToCircle(M);
+
+		M->Normal *= -1.0f;
+
+		return true;
+	}
+
+	// Error checks
+	if (Box == nullptr && Circle != nullptr)
+		printf("AABBToBox: Box is null\n");
+
+	if (Box != nullptr && Circle == nullptr)
+		printf("AABBToBox: Circle is null\n");
+
+	if (Box == nullptr && Circle == nullptr)
+		printf("AABBToBox: Both of the objects were null\n");
 
 	return false;
 }
@@ -447,10 +466,10 @@ bool World::PlaneToAABB(Manifold* M)
 
 	// Error checks
 	if (R == nullptr && P != nullptr)
-		printf("PlaneToAABB: R is null\n");
+		printf("PlaneToAABB: Rec is null\n");
 
 	if (R != nullptr && P == nullptr)
-		printf("PlaneToAABB: P is null\n");
+		printf("PlaneToAABB: Plane is null\n");
 
 	if (R == nullptr && P == nullptr)
 		printf("PlaneToAABB: Both of the objects were null\n");
@@ -470,45 +489,170 @@ bool World::BoxToAABB(Manifold* M)
 
 	if (Box != nullptr && Rec != nullptr)
 	{
-		glm::vec2 RecLocation = Rec->GetLocation() - Box->GetLocation();
+		glm::vec2 AxisToTest[] = {glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 1.0f),
+								  glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 0.0f)};
 
-		glm::vec2 Normal = glm::vec2(0.0f, 0.0f);
-		glm::vec2 Contact = glm::vec2(0.0f, 0.0f);
+		// Create rotation matrix
+		const float t = DEG2RAD(Box->GetRotation());
+		float ZRotation[] = {cosf(t), sinf(t),
+							 -sinf(t), cosf(t)};
 
-		int NumOfContacts = 0;
+		// Create separating axis number 3
+		glm::vec2 Axis = Normalize(glm::vec2(Box->GetExtent().x, 0.0f));
 
+		Multiply(AxisToTest[2].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
 
-		//if ()
-		//{
-		//	Normal = -Normal;
-		//}
+		// Create separating axis number 4
+		Axis = Normalize(glm::vec2(0.0f, Box->GetExtent().y));
 
-		if (NumOfContacts > 0)
+		Multiply(AxisToTest[3].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
+
+		// Check every axis for overlap
+		for (int i = 0; i < 4; ++i)
 		{
-			//const glm::vec2 ContactForce = 0.5f * (ContactForce1 - ContactForce2);
-
-			ResolveCollision(M);
-
-			printf("BoxToAABB: Collided!\n");
-
-			return true;
+			if (!OverlapOnAxis(*Rec, *Box, AxisToTest[i]))
+				return false;
 		}
+
+		M->ContactsCount++;
+		M->Normal = Box->GetLocation() - Rec->GetLocation();
+
+		ResolveCollision(M);
+
+		if (Rec->IsKinematic())
+			printf("BoxToAABB (Kinematic): Collided\n");
+
+		if (Box->IsKinematic())
+			printf("BoxToAABB (Kinematic): Collided\n");
+
+		if (!Rec->IsKinematic() && !Box->IsKinematic())
+			printf("BoxToAABB: Collided\n");
+
+		return true;
 	}
-	else
+
+	AABBToBox(M);
+	return false;
+}
+
+bool World::BoxToCircle(Manifold * M)
+{
+	auto* Box = dynamic_cast<::Box*>(M->A);
+	auto* Circle = dynamic_cast<::Circle*>(M->B);
+
+	if (Box != nullptr && Circle != nullptr)
 	{
-		AABBToBox(M);
+		glm::vec2 Distance = Circle->GetLocation() - Box->GetLocation();
+
+		// Make a rotation matrix
+		const float Theta = -DEG2RAD(Box->GetRotation());
+		float ZRotation[] = {cosf(Theta), sinf(Theta),
+							-sinf(Theta), cosf(Theta)};
+
+		// Rotate the line by the negative rotation matrix above. This transforms the line into local space of box
+		Multiply(Distance.AsArray, glm::vec2(Distance.x, Distance.y).AsArray, 1, 2, ZRotation, 2, 2);
+
+		// Create a new circle in the local space of the box
+		::Circle LocalCircle(Distance + Box->GetExtent(), Circle->GetVelocity(), Circle->GetRadius(), Circle->GetMass(), Circle->GetColor());
+
+		// Create an AABB to represent the local space of the box
+		class AABB LocalAABB(Box->GetLocation(), Box->GetVelocity(), Box->GetExtent().x * 2.0f, Box->GetExtent().y * 2.0f, Box->GetMass(), glm::vec4());
+
+		M->A = &LocalCircle;
+		M->A = &LocalAABB;
+
+		return CircleToAABB(M);
+	}
+
+	CircleToBox(M);
+	return false;
+}
+
+bool World::BoxToBox(Manifold * M)
+{
+	auto* Box1 = dynamic_cast<Box*>(M->A);
+	auto* Box2 = dynamic_cast<Box*>(M->B);
+
+	if (Box1 != nullptr && Box2 != nullptr)
+	{
+		glm::vec2 AxisToTest[] = {glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 1.0f),
+								  glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 0.0f),
+								  glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 0.0f)};
+
+		// Create rotation matrix
+		const float t = DEG2RAD(Box2->GetRotation());
+		float ZRotation[] = {cosf(t), sinf(t),
+							-sinf(t), cosf(t)};
+
+		// Create separating axis number 3
+		glm::vec2 Axis = Normalize(glm::vec2(Box2->GetExtent().x, 0.0f));
+
+		Multiply(AxisToTest[2].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
+
+		// Create separating axis number 4
+		Axis = Normalize(glm::vec2(0.0f, Box2->GetExtent().y));
+
+		Multiply(AxisToTest[3].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
+
+		// Create separating axis number 5
+		Axis = Normalize(glm::vec2(Box2->GetExtent().x, 0.0f));
+
+		Multiply(AxisToTest[4].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
+
+		// Create separating axis number 6
+		Axis = Normalize(glm::vec2(0.0f, Box2->GetExtent().y));
+
+		Multiply(AxisToTest[5].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
+
+		// Check every axis for overlap
+		for (int i = 0; i < 6; ++i)
+		{
+			if (!OverlapOnAxis(*Box1, *Box2, AxisToTest[i]))
+				return false;
+		}
+
+		M->ContactsCount++;
+		M->Penetration = 5.0f;
+		M->Normal = Normalize(Box2->GetLocation() - Box1->GetLocation());
+		
+		ResolveCollision(M);
+
+		if (Box1->IsKinematic())
+			printf("BoxToBox (Kinematic): Collided\n");
+
+		if (Box2->IsKinematic())
+			printf("BoxToBox (Kinematic): Collided\n");
+
+		if (!Box1->IsKinematic() && !Box2->IsKinematic())
+			printf("BoxToBox: Collided\n");
+
 		return true;
 	}
 
 	// Error checks
-	if (Box == nullptr && Rec != nullptr)
-		printf("BoxToAABB: Box is null\n");
+	if (Box1 == nullptr && Box2 != nullptr)
+		printf("BoxToBox: Box1 is null\n");
 
-	if (Box != nullptr && Rec == nullptr)
-		printf("BoxToAABB: Rec is null\n");
+	if (Box1 != nullptr && Box2 == nullptr)
+		printf("BoxToBox: Box2 is null\n");
+	
+	if (Box1 == nullptr && Box2 == nullptr)
+		printf("BoxToBox: Both of the objects were null\n");
 
-	if (Box == nullptr && Rec == nullptr)
-		printf("BoxToAABB: Both of the objects were null\n");
+	return false;
+}
+
+bool World::BoxToPlane(Manifold * M)
+{
+	const auto Box = dynamic_cast<::Box*>(M->A);
+	const auto Plane = dynamic_cast<::Plane*>(M->B);
+
+	if (Box != nullptr && Plane != nullptr)
+	{
+		
+	}
+	else
+		CircleToCircle(M);
 
 	return false;
 }
@@ -530,16 +674,7 @@ bool World::AABBToCircle(Manifold* M)
 		return true;
 	}
 
-	// Error checks
-	if (Circle == nullptr && Rec != nullptr)
-		printf("AABBToCircle: Circle is null\n");
-
-	if (Circle != nullptr && Rec == nullptr)
-		printf("AABBToCircle: AABB is null\n");
-	
-	if (Circle == nullptr && Rec == nullptr)
-		printf("AABBToCircle: Both of the objects were null\n");
-
+	BoxToBox(M);
 	return false;
 }
 
@@ -551,6 +686,115 @@ float World::Distance(const glm::vec2 A, const glm::vec2 B)
 float World::LengthSquared(const glm::vec2 Vector)
 {
 	return (Vector.x*Vector.x + Vector.y*Vector.y);
+}
+
+Interval World::GetInterval(const class AABB& Rec, const glm::vec2& Axis)
+{
+	// Get the min and max of this AABB
+	const glm::vec2 Min = Rec.GetMin();
+	const glm::vec2 Max = Rec.GetMax();
+
+	// Get all vertices of the AABB
+	const glm::vec2 Vertices[] = {glm::vec2(Min.x, Min.y), glm::vec2(Min.x, Max.y),
+								  glm::vec2(Max.x, Max.y), glm::vec2(Max.x, Min.y)};
+
+	// Set interval to first projected vertex
+	Interval Result{0.0f, 0.0f};
+	Result.Min = dot(Axis, Vertices[0]);
+	Result.Max = Result.Min;
+
+	// Project each vertex onto the axis
+	for (int i = 0; i < 4; i++)
+	{
+		const float Projection = dot(Axis, Vertices[i]);
+		if (Projection < Result.Min)
+			Result.Min = Projection;
+
+		if (Projection > Result.Max)
+			Result.Max = Projection;
+	}
+	
+	return Result;
+}
+
+Interval World::GetInterval(const Box& Box, const glm::vec2& Axis)
+{
+	// Make a non oriented version of this box
+	class AABB Rec(Box.GetLocation(), Box.GetVelocity(), Box.GetExtent().x * 2.0f, Box.GetExtent().y * 2.0f, Box.GetMass(), Box.GetColor());
+
+	// Find the 4 vertices of the AABB
+	const glm::vec2 Min = Rec.GetMin();
+	const glm::vec2 Max = Rec.GetMax();
+	glm::vec2 Vertices[] = {Min, Max, glm::vec2(Min.x, Max.y), glm::vec2(Max.x, Min.y)}; // Bottom left - Top right - Top left - Bottom right
+
+	// Create a rotation matrix from the orientation on the AABB
+	const float t = DEG2RAD(Box.GetRotation());
+	float ZRotation[] = {cosf(t), sinf(t),
+						-sinf(t), cosf(t)};
+
+	// Rotate every vertex of the AABB by the matrix above 
+	for (int i = 0; i < 4; i++)
+	{
+		glm::vec2 R = Vertices[i] - Box.GetLocation();
+
+		Multiply(R.AsArray, glm::vec2(R.x, R.y).AsArray, 1, 2, ZRotation, 2, 2);
+
+		Vertices[i] = R + Box.GetLocation();
+	}
+
+	// Store the min and max points of every projected vertex
+	Interval Result{0.0f, 0.0f};
+	Result.Min = Result.Max = dot(Axis, Vertices[0]);
+	for (int i = 0; i < 4; i++)
+	{
+		float Projection = dot(Axis, Vertices[i]);
+		Result.Min = (Projection < Result.Min) ? Projection : Result.Min;
+		Result.Max = (Projection > Result.Max) ? Projection : Result.Max;
+	}
+
+	return Result;
+}
+
+bool World::OverlapOnAxis(const class AABB& Rec, const Box& Box, const glm::vec2& Axis)
+{
+	const Interval A = GetInterval(Rec, Axis);
+	const Interval B = GetInterval(Box, Axis);
+	return (B.Min <= A.Max) && (A.Min <= B.Max);
+}
+
+bool World::OverlapOnAxis(const class Box& Box1, const Box& Box2, const glm::vec2& Axis)
+{
+	const Interval A = GetInterval(Box1, Axis);
+	const Interval B = GetInterval(Box2, Axis);
+	return (B.Min <= A.Max) && (A.Min <= B.Max);
+}
+
+bool World::Multiply(float * Out, const float * MatA, int ARows, int ACols, const float * MatB, int BRows, int BCols)
+{
+	if (ACols != BRows)
+		return false;
+
+	for (int i = 0; i < ARows; ++i)
+	{
+		for (int j = 0; j < BCols; ++j)
+		{
+			Out[BCols * i + j] = 0.0f;
+
+			for (int k = 0; k < BRows; ++k)
+			{
+				const int A = ACols * i + k;
+				const int B = BCols * k + j;
+				Out[BCols * i + j] += MatA[A] * MatB[B];
+			}
+		}
+	}
+
+	return true;
+}
+
+glm::vec2 World::Normalize(const glm::vec2 & Vector)
+{
+	return Vector * (1.0f/length(Vector));
 }
 
 void World::ResolveCollision(Manifold* M)
@@ -592,7 +836,41 @@ void World::ResolveCollision(Manifold* M)
 		Force = B->GetInverseMass()*ImpulseVector;
 		if (!B->IsKinematic())
 			B->ApplyForce(Force);
-		
+
+		PositionalCorrection(M);
+
+		// Friction
+		const glm::vec2 t = RelativeVelocity - (M->Normal * ContactVelocity);
+		if (LengthSquared(t) > 0.0f)
+			return;
+
+		Normalize(t);
+
+		// Calculate magnitude of friction
+		j = -dot(RelativeVelocity, t);
+		float jt = j / InverseMassSum;
+		j /= M->ContactsCount;
+
+		if (fabsf(jt) > 0.0f)
+			return;
+
+		// Coulombs Law
+		const float Friction = sqrtf(M->A->GetFriction() * M->B->GetFriction());
+		if (jt > j * Friction)
+			jt = j * Friction;
+		else if (jt < -j * Friction)
+			jt = -j * Friction;
+
+		const glm::vec2 TangentImpulse = t * jt;
+
+		Force = A->GetInverseMass()*-TangentImpulse;
+		if (!A->IsKinematic())
+			A->ApplyForce(Force);
+
+		Force = B->GetInverseMass()*TangentImpulse;
+		if (!B->IsKinematic())
+			B->ApplyForce(Force);
+
 		PositionalCorrection(M);
 	}
 }
