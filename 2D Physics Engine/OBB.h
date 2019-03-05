@@ -3,12 +3,12 @@
 
 #include <glm/mat4x4.hpp>
 
-class Box final : public Object
+class OBB final : public Object
 {
 public:
-	Box();
-	Box(glm::vec2 Location, glm::vec2 Velocity, glm::vec2 Extent, float Rotation, float Mass, glm::vec4 Color);
-	~Box();
+	OBB();
+	OBB(glm::vec2 Location, glm::vec2 Velocity, glm::vec2 Extent, float Rotation, float Mass, glm::vec4 Color);
+	~OBB();
 
 	void FixedUpdate(glm::vec2 Gravity, float TimeStep) override;
 	void Debug() override;

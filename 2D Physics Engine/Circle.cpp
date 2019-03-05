@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 Circle::Circle(const glm::vec2 Location, const glm::vec2 Velocity, const float Radius, const float Mass, const glm::vec4 Color)
-	: Collider(CIRCLE)
 {
 	this->Location = Location;
 	this->Velocity = Velocity;

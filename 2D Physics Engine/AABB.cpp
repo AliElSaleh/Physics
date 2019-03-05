@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 AABB::AABB(const glm::vec2 Location, const glm::vec2 Velocity, const float Width, const float Height, const float Mass, const glm::vec4 Color)
-	: Collider(Type::AABB)
 {
 	this->Location = Location;
 	this->Velocity = Velocity;
@@ -14,7 +13,6 @@ AABB::AABB(const glm::vec2 Location, const glm::vec2 Velocity, const float Width
 	this->Height = Extent.y * 2;
 	this->Mass = Mass;
 	this->LinearDrag = 0.3f;
-	this->AngularDrag = 0.3f;
 
 	if (this->Mass == 0)
 		this->InverseMass = 0;

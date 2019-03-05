@@ -6,7 +6,7 @@
 #include <glm/ext.hpp>
 #include "Plane.h"
 #include <cstdio>
-#include "Box.h"
+#include "OBB.h"
 #include "Input.h"
 
 World::World() = default;
@@ -16,8 +16,8 @@ typedef bool(*CollisionFn)(Manifold*);
 
 static CollisionFn CollisionFunctionArray[] =
 {
-	World::AABBToAABB, World::AABBToBox, World::CircleToAABB, World::BoxToCircle, World::BoxToPlane, World::CircleToPlane, World::PlaneToPlane,
-	World::PlaneToCircle, World::CircleToCircle, World::AABBToPlane, World::AABBToCircle, World::BoxToBox, World::PlaneToAABB, World::BoxToAABB
+	World::AABBToAABB, World::AABBToOBB, World::CircleToAABB, World::OBBToCircle, World::OBBToPlane, World::CircleToPlane, World::PlaneToPlane,
+	World::PlaneToCircle, World::CircleToCircle, World::AABBToPlane, World::AABBToCircle, World::OBBToOBB, World::PlaneToAABB, World::OBBToAABB
 };
 
 void World::AddActor(Object* Actor)
@@ -90,42 +90,36 @@ bool World::AABBToAABB(Manifold* M)
 
 	if (Rec1 != nullptr && Rec2 != nullptr)
 	{
+		// Are both axes overlapped
 		if (Rec1->GetLocation().x + Rec1->GetExtent().x > Rec2->GetLocation().x - Rec2->GetExtent().x &&
 			Rec1->GetLocation().x - Rec1->GetExtent().x < Rec2->GetLocation().x + Rec2->GetExtent().x &&
 			Rec1->GetLocation().y + Rec1->GetExtent().y > Rec2->GetLocation().y - Rec2->GetExtent().y &&
 			Rec1->GetLocation().y - Rec1->GetExtent().y < Rec2->GetLocation().y + Rec2->GetExtent().y)
 		{
-			M->ContactsCount = 0;
-
 			glm::vec2 CollisionNormal;
 
 			const glm::vec2 Size = {fabsf(Rec1->GetWidth()), fabsf(Rec1->GetHeight()) };
 
 			const glm::vec2 A = { fabsf(Size.x), fabsf(Size.y) };
 
-			const glm::vec2 S = { Rec1->GetLocation().x < Rec2->GetLocation().x ? 1.0f : -1.0f,
-							Rec1->GetLocation().y < Rec2->GetLocation().y ? 1.0f : -1.0f};
+			const glm::vec2 S = { Rec1->GetLocation().x < Rec2->GetLocation().x ? -1.0f : 1.0f,
+								  Rec1->GetLocation().y < Rec2->GetLocation().y ? -1.0f : 1.0f};
 
 			if (A.x < A.y)
-				CollisionNormal = glm::vec2(S.x, 0.0f);
+				CollisionNormal = glm::vec2(S.x, S.y);
 			else
-				CollisionNormal = glm::vec2(0.f, S.y);
+				CollisionNormal = glm::vec2(-S.x, -S.y);
 
-			M->ContactsCount++;
-
+			M->ContactsCount = 1;
+			M->Penetration = LengthSquared(CollisionNormal);
 			M->Normal = CollisionNormal;
-
-			M->Penetration = length(Size) * Rec1->GetInverseMass()/Rec2->GetInverseMass();
 			
 			ResolveCollision(M);
-			
-			PrintCollided(M, AABB, AABB);
-			
 			return true;
 		}
 	}
 
-	PrintError(M, AABB, AABB);
+	PrintError(Rec1, Rec2, AABB, AABB);
 	
 	return false;
 }
@@ -153,13 +147,10 @@ bool World::CircleToAABB(Manifold* M)
 		if (LengthSquared(Distance) < Circle->GetRadius() * Circle->GetRadius())
 		{
 			M->ContactsCount = 1;
-			M->Penetration = Circle->GetRadius() * Circle->GetRadius();
+			M->Penetration = Circle->GetRadius();
 			M->Normal = normalize(Distance);
 
 			ResolveCollision(M);
-
-			PrintCollided(M, CIRCLE, AABB);
-
 			return true;
 		}
 	}
@@ -169,7 +160,7 @@ bool World::CircleToAABB(Manifold* M)
 		return true;
 	}
 
-	PrintError(M, CIRCLE, AABB);
+	PrintError(Circle, Rec, CIRCLE, AABB);
 
 	return false;
 }
@@ -183,28 +174,41 @@ bool World::AABBToPlane(Manifold* M)
 	{
 		M->ContactsCount = 0;
 
-		glm::vec2 CollisionNormal = Plane->GetNormal();
+		const glm::vec2 CollisionNormal = Plane->GetNormal();
 
-		float AABBToPlane = dot(Rec->GetLocation(), CollisionNormal) - Plane->GetDistance();
+		// Check if the start or the end points are inside the AABB
+		if (PointOnAABB(Plane->GetStart(), *Rec) || PointOnAABB(Plane->GetEnd(), *Rec))
+			return true;
 
-		// If we are behind the plane, then flip the normal
-		if (AABBToPlane < 0)
-		{
-			CollisionNormal *= -1;
-			AABBToPlane *= -1;
-		}
+		// Do raycast against the AABB
+		glm::vec2 Normal = Normalize(Plane->GetEnd() - Plane->GetStart());
+		Normal.x = Normal.x != 0 ? 1.0f/Normal.x : 0;
+		Normal.y = Normal.y != 0 ? 1.0f/Normal.y : 0;
 
-		const float Intersection = Rec->GetExtent().x - AABBToPlane;
-		if (Intersection > 0)
+		const glm::vec2 Min = (Rec->GetMin() - Plane->GetStart()) * Normal;
+		const glm::vec2 Max = (Rec->GetMax() - Plane->GetStart()) * Normal;
+
+		const float tmin = fmaxf(fminf(Min.x, Max.x), fminf(Min.y, Max.y));
+		const float tmax = fminf(fmaxf(Min.x, Max.x), fmaxf(Min.y, Max.y));
+
+		// if tmax < 0, the ray is intersecting the AABB, but the AABB is behind us.
+		// OR if tmin > tmax the ray doesn't intersect the AABB
+		if (tmax < 0 || tmin > tmax)
+			return false;
+
+		// Ray intersects the AABB
+		const float t = tmin < 0.0f ? tmax : tmin;
+
+		const float PenetrationDepth = dot(Rec->GetLocation(), CollisionNormal) - Plane->GetDistance();
+
+		// If ray hits and the length of the ray is less than the length of the line, we have a collision
+		if (t > 0.0f && t * t < MagnitudeSquared(Plane->GetEnd() - Plane->GetStart()))
 		{
 			M->ContactsCount = 1;
-			M->Penetration = 50.0f;//Rec->GetMass();
+			M->Penetration = PenetrationDepth;
 			M->Normal = CollisionNormal;
 
 			Plane->ResolveCollision(M);
-
-			PrintCollided(M, AABB, PLANE);
-
 			return true;
 		}
 	}
@@ -214,29 +218,29 @@ bool World::AABBToPlane(Manifold* M)
 		return true;
 	}
 
-	PrintError(M, AABB, PLANE);
+	PrintError(Rec, Plane, AABB, PLANE);
 
 	return false;
 }
 
-bool World::AABBToBox(Manifold* M)
+bool World::AABBToOBB(Manifold* M)
 {
 	auto* Rec = dynamic_cast<class AABB*>(M->A);
-	auto* Box = dynamic_cast<::Box*>(M->B);
+	auto* Box = dynamic_cast<class OBB*>(M->B);
 
 	if (Box != nullptr && Rec != nullptr)
 	{
 		M->A = Box;
 		M->B = Rec;
 
-		BoxToAABB(M);
+		OBBToAABB(M);
 
 		M->Normal *= -1.0f;
 
 		return true;
 	}
 
-	PrintError(M, AABB, OBB);
+	PrintError(Rec, Box, AABB, OBB);
 
 	return false;
 }
@@ -271,7 +275,7 @@ bool World::CircleToCircle(Manifold* M)
 		}
 	}
 
-	PrintError(M, CIRCLE, CIRCLE);
+	PrintError(C1, C2, CIRCLE, CIRCLE);
 
 	return false;
 }
@@ -324,31 +328,30 @@ bool World::CircleToPlane(Manifold* M)
 		return true;
 	}
 
-	PrintError(M, CIRCLE, PLANE);
+	PrintError(C, P, CIRCLE, PLANE);
 
 	return false;
 }
 
-bool World::CircleToBox(Manifold * M)
+bool World::CircleToOBB(Manifold * M)
 {
 	auto *Circle = dynamic_cast<::Circle*>(M->A);
-	auto *Box = dynamic_cast<::Box*>(M->B);
+	auto *Box = dynamic_cast<class OBB*>(M->B);
 
 	if (Circle != nullptr && Box != nullptr)
 	{
 		M->A = Box;
 		M->B = Circle;
 
-		BoxToCircle(M);
+		OBBToCircle(M);
 
 		M->Normal *= -1.0f;
 
 		return true;
 	}
-
-	PrintError(M, CIRCLE, OBB);
-
-	return false;
+	
+	PlaneToAABB(M);
+	return true;
 }
 
 bool World::PlaneToCircle(Manifold* M)
@@ -366,7 +369,7 @@ bool World::PlaneToCircle(Manifold* M)
 		return true;
 	}
 
-	PrintError(M, PLANE, CIRCLE);
+	PrintError(P, C, PLANE, CIRCLE);
 
 	return false;
 }
@@ -388,9 +391,8 @@ bool World::PlaneToAABB(Manifold* M)
 		return true;
 	}
 
-	PrintError(M, PLANE, AABB);
-
-	return false;
+	AABBToPlane(M);
+	return true;
 }
 
 bool World::PlaneToPlane(Manifold* M)
@@ -398,9 +400,9 @@ bool World::PlaneToPlane(Manifold* M)
 	return false;
 }
 
-bool World::BoxToAABB(Manifold* M)
+bool World::OBBToAABB(Manifold* M)
 {
-	auto* Box = dynamic_cast<::Box*>(M->A);
+	auto* Box = dynamic_cast<class OBB*>(M->A);
 	auto* Rec = dynamic_cast<class AABB*>(M->B);
 
 	if (Box != nullptr && Rec != nullptr)
@@ -440,13 +442,13 @@ bool World::BoxToAABB(Manifold* M)
 		return true;
 	}
 
-	AABBToBox(M);
+	AABBToOBB(M);
 	return false;
 }
 
-bool World::BoxToCircle(Manifold * M)
+bool World::OBBToCircle(Manifold * M)
 {
-	auto* Box = dynamic_cast<::Box*>(M->A);
+	auto* Box = dynamic_cast<class OBB*>(M->A);
 	auto* Circle = dynamic_cast<::Circle*>(M->B);
 
 	if (Box != nullptr && Circle != nullptr)
@@ -473,14 +475,14 @@ bool World::BoxToCircle(Manifold * M)
 		return CircleToAABB(M);
 	}
 
-	CircleToBox(M);
+	CircleToOBB(M);
 	return false;
 }
 
-bool World::BoxToBox(Manifold * M)
+bool World::OBBToOBB(Manifold * M)
 {
-	auto* Box1 = dynamic_cast<Box*>(M->A);
-	auto* Box2 = dynamic_cast<Box*>(M->B);
+	auto* Box1 = dynamic_cast<class OBB*>(M->A);
+	auto* Box2 = dynamic_cast<class OBB*>(M->B);
 
 	if (Box1 != nullptr && Box2 != nullptr)
 	{
@@ -531,19 +533,19 @@ bool World::BoxToBox(Manifold * M)
 		return true;
 	}
 
-	PrintError(M, OBB, OBB);
+	PrintError(Box1, Box2, OBB, OBB);
 
 	return false;
 }
 
-bool World::BoxToPlane(Manifold * M)
+bool World::OBBToPlane(Manifold * M)
 {
-	const auto Box = dynamic_cast<::Box*>(M->A);
+	const auto Box = dynamic_cast<class OBB*>(M->A);
 	const auto Plane = dynamic_cast<::Plane*>(M->B);
 
 	if (Box != nullptr && Plane != nullptr)
 	{
-		
+		// TODO: Implement OBB To Plane collision test 
 	}
 	else
 		CircleToCircle(M);
@@ -568,7 +570,7 @@ bool World::AABBToCircle(Manifold* M)
 		return true;
 	}
 
-	BoxToBox(M);
+	OBBToOBB(M);
 	return false;
 }
 
@@ -611,7 +613,7 @@ Interval World::GetInterval(const class AABB& Rec, const glm::vec2& Axis)
 	return Result;
 }
 
-Interval World::GetInterval(const Box& Box, const glm::vec2& Axis)
+Interval World::GetInterval(const class OBB& Box, const glm::vec2& Axis)
 {
 	// Make a non oriented version of this box
 	class AABB Rec(Box.GetLocation(), Box.GetVelocity(), Box.GetExtent().x * 2.0f, Box.GetExtent().y * 2.0f, Box.GetMass(), Box.GetColor());
@@ -649,18 +651,26 @@ Interval World::GetInterval(const Box& Box, const glm::vec2& Axis)
 	return Result;
 }
 
-bool World::OverlapOnAxis(const class AABB& Rec, const Box& Box, const glm::vec2& Axis)
+bool World::OverlapOnAxis(const class AABB& Rec, const class OBB& Box, const glm::vec2& Axis)
 {
 	const Interval A = GetInterval(Rec, Axis);
 	const Interval B = GetInterval(Box, Axis);
 	return (B.Min <= A.Max) && (A.Min <= B.Max);
 }
 
-bool World::OverlapOnAxis(const class Box& Box1, const Box& Box2, const glm::vec2& Axis)
+bool World::OverlapOnAxis(const class OBB& Box1, const class OBB& Box2, const glm::vec2& Axis)
 {
 	const Interval A = GetInterval(Box1, Axis);
 	const Interval B = GetInterval(Box2, Axis);
 	return (B.Min <= A.Max) && (A.Min <= B.Max);
+}
+
+bool World::PointOnAABB(const glm::vec2& Point, const class AABB& Rec)
+{
+	const glm::vec2 Min = Rec.GetMin();
+	const glm::vec2 Max = Rec.GetMax();
+
+	return Min.x <= Point.x && Min.y <= Point.y && Point.x <= Max.x && Point.y <= Max.y;
 }
 
 void World::PrintCollided(Manifold* M, const Geometry Type1, const Geometry Type2)
@@ -780,7 +790,7 @@ void World::PrintCollided(Manifold* M, const Geometry Type1, const Geometry Type
 
 }
 
-void World::PrintError(Manifold * M, const Geometry Type1, const Geometry Type2)
+void World::PrintError(Object* A, Object* B, const Geometry Type1, const Geometry Type2)
 {
 	const char* CollisionTest{};
 	const char* Shape1{}, *Shape2{};
@@ -919,13 +929,13 @@ void World::PrintError(Manifold * M, const Geometry Type1, const Geometry Type2)
 		break;
 	}
 
-	if (M->A == nullptr && M->B != nullptr)
+	if (A == nullptr && B != nullptr)
 		printf("%s: %s is null\n", CollisionTest, Shape1);
 
-	if (M->A != nullptr && M->B == nullptr)
+	if (A != nullptr && B == nullptr)
 		printf("%s: %s is null\n", CollisionTest, Shape2);
 
-	if (M->A == nullptr && M->B == nullptr)
+	if (A == nullptr && B == nullptr)
 		printf("%s: Both of the objects were null\n", CollisionTest);
 }
 
@@ -1047,7 +1057,7 @@ void World::PositionalCorrection(Manifold* M)
 
 	if (A != nullptr && B != nullptr)
 	{
-		const float PenetrationDepthAllowance = 0.03f;
+		const float PenetrationDepthAllowance = 0.1f;
 		const float PenetrationCorrection = 3.0f;
 
 		const glm::vec2 Correction = glm::max(M->Penetration - PenetrationDepthAllowance, 0.0f)/(A->GetInverseMass() + B->GetInverseMass()) * M->Normal * PenetrationCorrection;

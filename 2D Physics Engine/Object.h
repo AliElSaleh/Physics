@@ -2,7 +2,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
-class Box;
+class OBB;
 
 static const float MIN_LINEAR_THRESHOLD = 0.1f;
 static const float MIN_ROTATION_THRESHOLD = 0.01f;

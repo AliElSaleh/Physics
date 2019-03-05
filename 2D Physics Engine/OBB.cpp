@@ -1,10 +1,10 @@
-#include "Box.h"
+#include "OBB.h"
 #include "Gizmos.h"
 
 #include <glm/ext.hpp>
 #include <cstdio>
 
-Box::Box()
+OBB::OBB()
 {
 	this->Location = {0.0f, 0.0f};
 	this->HalfExtent = {1.0f, 1.0f};
@@ -15,10 +15,10 @@ Box::Box()
 	this->AngularDrag = 0.0f;
 	this->Color = {1.0f, 0.0f, 0.0f, 1.0f};
 
-	Shape = OBB;
+	Shape = Geometry::OBB;
 }
 
-Box::Box(glm::vec2 Location, glm::vec2 Velocity, glm::vec2 Extent, float Rotation, float Mass, glm::vec4 Color)
+OBB::OBB(glm::vec2 Location, glm::vec2 Velocity, glm::vec2 Extent, float Rotation, float Mass, glm::vec4 Color)
 {
 	this->Location = Location;
 	this->Velocity = Velocity;
@@ -38,12 +38,12 @@ Box::Box(glm::vec2 Location, glm::vec2 Velocity, glm::vec2 Extent, float Rotatio
 	this->AngularVelocity = 0.0f;
 	this->Moment = 1.0f;
 
-	Shape = OBB;
+	Shape = Geometry::OBB;
 }
 
-Box::~Box() = default;
+OBB::~OBB() = default;
 
-void Box::FixedUpdate(const glm::vec2 Gravity, const float TimeStep)
+void OBB::FixedUpdate(const glm::vec2 Gravity, const float TimeStep)
 {
 	Object::FixedUpdate(Gravity, TimeStep);
 
@@ -57,21 +57,18 @@ void Box::FixedUpdate(const glm::vec2 Gravity, const float TimeStep)
 				 0,  0,  0, 1.0f};
 }
 
-void Box::Debug()
+void OBB::Debug()
 {
 	printf("Location X: %f, Y: %f\n", Location.x, Location.y);
 	printf("Rotation: %f\n", Rotation);
 	//printf("AngVelocity: %f\n", AngularVelocity);
 }
 
-void Box::MakeGizmo()
+void OBB::MakeGizmo()
 {
 	// Box
 	aie::Gizmos::add2DAABBFilled(Location, HalfExtent, Color, &Transform);
 	
 	// Location
 	aie::Gizmos::add2DCircle(Location, 0.5f, 30, {1.0f, 1.0f, 1.0f, 1.0f});
-
-	//// Extents
-	//aie::Gizmos::add2DLine(Location, Location + HalfExtent, {1.0f, 1.0f, 1.0f, 1.0f});
 }

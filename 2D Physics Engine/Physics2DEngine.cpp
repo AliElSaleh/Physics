@@ -5,7 +5,7 @@
 #include "Circle.h"
 #include "Gizmos.h"
 #include "Plane.h"
-#include "Box.h"
+#include "OBB.h"
 #include "../dependencies/glfw/include/GLFW/glfw3.h"
 
 #include <glm/gtc/matrix_transform.inl>
@@ -49,13 +49,6 @@ bool Physics2DEngine::Startup()
 	//B->SetKinematic(true);
 	//PhysicsWorld->AddActor(B);
 
-	// Boxes
-	//for (int i = 0; i < 10; i++)
-	//{
-	//	auto R = new Box({ rand() % 40, rand() % 70 - 20 }, { 0.0f, 0.0f }, {1.0f, 1.0f}, rand() % 360, 10.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
-	//	PhysicsWorld->AddActor(R);
-	//}
-
 	//auto R = new Box({ 20.0f, 20.0f }, { -20.0f, -10.0f }, {10.0f, 5.0f}, 0.0f, 10.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
 	//PhysicsWorld->AddActor(R);
 
@@ -76,17 +69,7 @@ bool Physics2DEngine::Startup()
 	Normal = { 0.65f, 0.75f };
 	PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
 
-	// AABBs
-	//for (int i = 0; i < 5; i++)
-	//{
-	//	const glm::vec2 Location = { rand() % 50, rand() % 50 };
-	//	const glm::vec2 Velocity = { rand() % 20 - 20, rand() % 20 - 20 };
-	//	const float Mass = rand() % 10;
-	//
-	//	auto* R = new AABB(Location, Velocity, 3, 3, Mass, {1.0f, 1.0f, 0.0f, 1.0f});
-	//	PhysicsWorld->AddActor(R);
-	//}
-
+	// Pool setup
 	//float XOffset = -50;
 	//float YOffset = 6;
 	//
@@ -131,6 +114,14 @@ bool Physics2DEngine::Startup()
 	//Cue = new Circle({ 50.0f, -3.0f }, { 0.0f, 0.0f }, 3.0f, 5.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
 	//PhysicsWorld->AddActor(Cue);
 	//
+
+	// AABBs
+	for (int i = 0; i < 30; i++)
+	{
+		const auto Rec = new class AABB({ rand() % 30 - 20, rand() % 80 - 30}, { 0.0f, 0.0f }, 3.0f, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+		PhysicsWorld->AddActor(Rec);
+	}
+
 	// Circles
 	for (int i = 0; i < 30; i++)
 	{
