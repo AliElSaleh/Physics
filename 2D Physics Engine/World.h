@@ -53,16 +53,19 @@ public:
 	static bool OverlapOnAxis(const class AABB& Rec, const Box& Box, const glm::vec2& Axis);
 	static bool OverlapOnAxis(const class Box& Box1, const Box& Box2, const glm::vec2& Axis);
 
-	static bool Multiply(float* Out, const float* MatA, int ARows, int ACols, const float* MatB, int BRows, int BCols);
-
-	static glm::vec2 Normalize(const glm::vec2& Vector);
-
 	glm::vec2 Gravity{};
 	float TimeStep{};
 
 private:
 	std::vector<Object*> Actors;
 
+	static void PrintCollided(Manifold* M, Geometry Type1, Geometry Type2);
+	static void PrintError(Manifold* M, Geometry Type1, Geometry Type2);
+
+	static bool Multiply(float* Out, const float* MatA, int ARows, int ACols, const float* MatB, int BRows, int BCols);
+
+	static glm::vec2 Normalize(const glm::vec2& Vector);
+	static float MagnitudeSquared(const glm::vec2& Vector);
 	static float LengthSquared(glm::vec2 Vector);
 };
 

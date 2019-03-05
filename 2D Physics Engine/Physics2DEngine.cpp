@@ -30,14 +30,14 @@ bool Physics2DEngine::Startup()
 	
 	// Borders
 	// Left
-	auto B = new class AABB({ -95.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
-	B->SetKinematic(true);
-	PhysicsWorld->AddActor(B);
-	
-	// Right
-	B = new class AABB({ 95.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
-	B->SetKinematic(true);
-	PhysicsWorld->AddActor(B);
+	//auto B = new class AABB({ -95.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
+	//B->SetKinematic(true);
+	//PhysicsWorld->AddActor(B);
+	//
+	//// Right
+	//B = new class AABB({ 95.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
+	//B->SetKinematic(true);
+	//PhysicsWorld->AddActor(B);
 	
 	//// Top
 	//B = new class AABB({ 0.0f, 50.0f }, { 0.0f, 0.0f }, 180.0f, 5.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
@@ -45,9 +45,9 @@ bool Physics2DEngine::Startup()
 	//PhysicsWorld->AddActor(B);
 	
 	// Bottom
-	B = new class AABB({ 0.0f, -50.0f }, { 0.0f, 0.0f }, 180.0f, 5.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
-	B->SetKinematic(true);
-	PhysicsWorld->AddActor(B);
+	//B = new class AABB({ 0.0f, -50.0f }, { 0.0f, 0.0f }, 180.0f, 5.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
+	//B->SetKinematic(true);
+	//PhysicsWorld->AddActor(B);
 
 	// Boxes
 	//for (int i = 0; i < 10; i++)
@@ -69,12 +69,12 @@ bool Physics2DEngine::Startup()
 	//PhysicsWorld->AddActor(C);
 
 	// Plane
-	//glm::vec2 Normal = { -0.65f, 0.75f };
-	//PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
-	//
-	//// Plane
-	//Normal = { 0.65f, 0.75f };
-	//PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
+	glm::vec2 Normal = { -0.65f, 0.75f };
+	PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
+	
+	// Plane
+	Normal = { 0.65f, 0.75f };
+	PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
 
 	// AABBs
 	//for (int i = 0; i < 5; i++)
@@ -132,9 +132,9 @@ bool Physics2DEngine::Startup()
 	//PhysicsWorld->AddActor(Cue);
 	//
 	// Circles
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < 30; i++)
 	{
-		const auto C = new Circle({ rand() % 30, rand() % 80 - 40}, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+		const auto C = new Circle({ rand() % 30 - 20, rand() % 80 - 30}, { 0.0f, 0.0f }, 2.0f, 1.0f, { 1, 0.992, 0.658, 1.0f });
 		PhysicsWorld->AddActor(C);
 	}
 
@@ -164,17 +164,9 @@ void Physics2DEngine::Update(const float DeltaTime)
 
 	PhysicsWorld->Update(DeltaTime);
 
-	int x, y;
-	Input->getMouseXY(&x, &y);
-	
-	MouseLocation = glm::vec2( x, y );
-
-	MouseLocation.x = glm::clamp(MouseLocation.x, -100.0f, 100.0f);
-	MouseLocation.y = glm::clamp(MouseLocation.y, -100.0f, 100.0f);
-
 	if (Input->wasKeyPressed(aie::INPUT_KEY_SPACE))
 	{
-		const auto C = new Circle({0.0f, 0.0f}, { 0.0f, -10.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+		const auto C = new Circle({0.0f, 40.0f}, { 0.0f, -10.0f }, 2.0f, 1.0f, { 1, 0.992, 0.658, 1.0f });
 		PhysicsWorld->AddActor(C);
 	}
 

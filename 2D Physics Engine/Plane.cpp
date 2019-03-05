@@ -31,8 +31,8 @@ void Plane::MakeGizmo()
 
 	const glm::vec2 Parallel = { Normal.y, -Normal.x };
 	const glm::vec4 Color = { 1.0f, 1.0f, 1.0f, 1.0f };
-	const glm::vec2 Start = CenterPoint + Parallel * LineSegmentLength;
-	const glm::vec2 End = CenterPoint - Parallel * LineSegmentLength;
+	Start = CenterPoint + Parallel * LineSegmentLength;
+	End = CenterPoint - Parallel * LineSegmentLength;
 
 	aie::Gizmos::add2DLine(Start, End, Color);
 }
@@ -45,7 +45,7 @@ void Plane::ResolveCollision(Manifold* M)
 	const float e = M->B->GetRestitution();
 
 	// Impulse scalar calculation
-	float j = dot(-(1 + e) * RelativeVelocity, M->Normal) / (M->B->GetInverseMass());
+	float j = dot(-(1 + e) * RelativeVelocity, M->Normal) / M->B->GetInverseMass();
 
 	glm::vec2 Force = M->Normal * j;
 

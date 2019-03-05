@@ -119,28 +119,13 @@ bool World::AABBToAABB(Manifold* M)
 			
 			ResolveCollision(M);
 			
-			if (Rec1->IsKinematic())
-				printf("AABBToAABB (Kinematic): Collided!\n");
-			
-			if (Rec2->IsKinematic())
-				printf("AABBToAABB (Kinematic): Collided!\n");
-			
-			if (!Rec1->IsKinematic() && !Rec2->IsKinematic())
-				printf("AABBToAABB: Collided!\n");
+			PrintCollided(M, AABB, AABB);
 			
 			return true;
 		}
 	}
 
-	// Error checks
-	if (Rec1 == nullptr && Rec2 != nullptr)
-		printf("AABBToAABB: Rec1 is null\n");
-	
-	if (Rec1 != nullptr && Rec2 == nullptr)
-		printf("AABBToAABB: Rec2 is null\n");
-	
-	if (Rec1 == nullptr && Rec2 == nullptr)
-		printf("AABBToAABB: Both of the objects were null\n");
+	PrintError(M, AABB, AABB);
 	
 	return false;
 }
@@ -173,14 +158,7 @@ bool World::CircleToAABB(Manifold* M)
 
 			ResolveCollision(M);
 
-			if (Rec->IsKinematic())
-				printf("CircleToAABB (Kinematic): Collided!\n");
-
-			if (Circle->IsKinematic())
-				printf("CircleToAABB (Kinematic): Collided!\n");
-
-			if (!Rec->IsKinematic() && !Circle->IsKinematic())
-				printf("CircleToAABB: Collided!\n");
+			PrintCollided(M, CIRCLE, AABB);
 
 			return true;
 		}
@@ -191,14 +169,7 @@ bool World::CircleToAABB(Manifold* M)
 		return true;
 	}
 
-	if (Circle == nullptr && Rec != nullptr)
-		printf("CircleToAABB: Circle is null\n");
-
-	if (Circle != nullptr && Rec == nullptr)
-		printf("CircleToAABB: AABB is null\n");
-
-	if (Circle == nullptr && Rec == nullptr)
-		printf("CircleToAABB: Both of the objects were null\n");
+	PrintError(M, CIRCLE, AABB);
 
 	return false;
 }
@@ -232,7 +203,7 @@ bool World::AABBToPlane(Manifold* M)
 
 			Plane->ResolveCollision(M);
 
-			printf("AABBToPlane: Collided!\n");
+			PrintCollided(M, AABB, PLANE);
 
 			return true;
 		}
@@ -243,14 +214,7 @@ bool World::AABBToPlane(Manifold* M)
 		return true;
 	}
 
-	if (Rec == nullptr && Plane != nullptr)
-		printf("AABBToPlane: Rec is null\n");
-
-	if (Rec != nullptr && Plane == nullptr)
-		printf("AABBToPlane: Plane is null\n");
-
-	if (Rec == nullptr && Plane == nullptr)
-		printf("AABBToPlane: Both of the objects were null\n");
+	PrintError(M, AABB, PLANE);
 
 	return false;
 }
@@ -272,15 +236,7 @@ bool World::AABBToBox(Manifold* M)
 		return true;
 	}
 
-	// Error checks
-	if (Box == nullptr && Rec != nullptr)
-		printf("AABBToBox: Box is null\n");
-
-	if (Box != nullptr && Rec == nullptr)
-		printf("AABBToBox: Rec is null\n");
-
-	if (Box == nullptr && Rec == nullptr)
-		printf("AABBToBox: Both of the objects were null\n");
+	PrintError(M, AABB, OBB);
 
 	return false;
 }
@@ -311,27 +267,11 @@ bool World::CircleToCircle(Manifold* M)
 
 			ResolveCollision(M);
 
-			if (C1->IsKinematic())
-				printf("Circle (Kinematic): Collided!\n");
-
-			if (C2->IsKinematic())
-				printf("Circle (Kinematic): Collided!\n");
-
-			if (!C1->IsKinematic() && !C2->IsKinematic())
-				printf("Circle: Collided!\n");
-
 			return true;
 		}
 	}
 
-	if (C1 == nullptr && C2 != nullptr)
-		printf("CircleToCircle: C1 is null\n");
-
-	if (C1 != nullptr && C2 == nullptr)
-		printf("CircleToCircle: C2 is null\n");
-	
-	if (C1 == nullptr && C2 == nullptr)
-		printf("CircleToCircle: Both of the objects were null\n");
+	PrintError(M, CIRCLE, CIRCLE);
 
 	return false;
 }
@@ -346,6 +286,16 @@ bool World::CircleToPlane(Manifold* M)
 	{
 		M->ContactsCount = 0;
 
+		const glm::vec2 AB = P->GetEnd() - P->GetStart();
+		const float t = dot(C->GetLocation() - P->GetStart(), AB) / dot(AB, AB);
+
+		if (t < 0.0f || t > 1.0f)
+			return false;
+
+		const glm::vec2 ClosestPoint = P->GetStart() + AB * t;
+
+		const glm::vec2 CircleToClosest[] = {C->GetLocation(), ClosestPoint};
+
 		glm::vec2 CollisionNormal = P->GetNormal();
 		float CircleToPlane = dot(C->GetLocation(), CollisionNormal) - P->GetDistance();
 		
@@ -355,18 +305,16 @@ bool World::CircleToPlane(Manifold* M)
 			CollisionNormal *= -1;
 			CircleToPlane *= -1;
 		}
-		
-		const float Intersection = C->GetRadius() - CircleToPlane;
-		if (Intersection > 0)
+
+		const float Intersection = MagnitudeSquared(CircleToClosest[1] - CircleToClosest[0]);
+		if (Intersection < C->GetRadius() * C->GetRadius() * 1.1f) // 1.1 - offset
 		{
 			M->ContactsCount = 1;
 			M->Penetration = CircleToPlane;
-			M->Normal = CollisionNormal;
+			M->Normal = P->GetNormal();
 		
 			P->ResolveCollision(M);
-		
-			printf("CircleToPlane: Collided!\n");
-		
+
 			return true;
 		}
 	}
@@ -376,15 +324,7 @@ bool World::CircleToPlane(Manifold* M)
 		return true;
 	}
 
-	// Error checks
-	if (C == nullptr && P != nullptr)
-		printf("CircleToPlane: Circle is null\n");
-
-	if (C != nullptr && P == nullptr)
-		printf("CircleToPlane: Plane is null\n");
-
-	if (C == nullptr && P == nullptr)
-		printf("CircleToPlane: Both of the objects were null\n");
+	PrintError(M, CIRCLE, PLANE);
 
 	return false;
 }
@@ -406,15 +346,7 @@ bool World::CircleToBox(Manifold * M)
 		return true;
 	}
 
-	// Error checks
-	if (Box == nullptr && Circle != nullptr)
-		printf("AABBToBox: Box is null\n");
-
-	if (Box != nullptr && Circle == nullptr)
-		printf("AABBToBox: Circle is null\n");
-
-	if (Box == nullptr && Circle == nullptr)
-		printf("AABBToBox: Both of the objects were null\n");
+	PrintError(M, CIRCLE, OBB);
 
 	return false;
 }
@@ -434,15 +366,7 @@ bool World::PlaneToCircle(Manifold* M)
 		return true;
 	}
 
-	// Error checks
-	if (C == nullptr && P != nullptr)
-		printf("CircleToPlane: Circle is null\n");
-
-	if (C != nullptr && P == nullptr)
-		printf("CircleToPlane: Plane is null\n");
-
-	if (C == nullptr && P == nullptr)
-		printf("CircleToPlane: Both of the objects were null\n");
+	PrintError(M, PLANE, CIRCLE);
 
 	return false;
 }
@@ -464,15 +388,7 @@ bool World::PlaneToAABB(Manifold* M)
 		return true;
 	}
 
-	// Error checks
-	if (R == nullptr && P != nullptr)
-		printf("PlaneToAABB: Rec is null\n");
-
-	if (R != nullptr && P == nullptr)
-		printf("PlaneToAABB: Plane is null\n");
-
-	if (R == nullptr && P == nullptr)
-		printf("PlaneToAABB: Both of the objects were null\n");
+	PrintError(M, PLANE, AABB);
 
 	return false;
 }
@@ -519,14 +435,7 @@ bool World::BoxToAABB(Manifold* M)
 
 		ResolveCollision(M);
 
-		if (Rec->IsKinematic())
-			printf("BoxToAABB (Kinematic): Collided\n");
-
-		if (Box->IsKinematic())
-			printf("BoxToAABB (Kinematic): Collided\n");
-
-		if (!Rec->IsKinematic() && !Box->IsKinematic())
-			printf("BoxToAABB: Collided\n");
+		PrintCollided(M, OBB, AABB);
 
 		return true;
 	}
@@ -617,27 +526,12 @@ bool World::BoxToBox(Manifold * M)
 		
 		ResolveCollision(M);
 
-		if (Box1->IsKinematic())
-			printf("BoxToBox (Kinematic): Collided\n");
-
-		if (Box2->IsKinematic())
-			printf("BoxToBox (Kinematic): Collided\n");
-
-		if (!Box1->IsKinematic() && !Box2->IsKinematic())
-			printf("BoxToBox: Collided\n");
+		PrintCollided(M, OBB, OBB);
 
 		return true;
 	}
 
-	// Error checks
-	if (Box1 == nullptr && Box2 != nullptr)
-		printf("BoxToBox: Box1 is null\n");
-
-	if (Box1 != nullptr && Box2 == nullptr)
-		printf("BoxToBox: Box2 is null\n");
-	
-	if (Box1 == nullptr && Box2 == nullptr)
-		printf("BoxToBox: Both of the objects were null\n");
+	PrintError(M, OBB, OBB);
 
 	return false;
 }
@@ -769,7 +663,273 @@ bool World::OverlapOnAxis(const class Box& Box1, const Box& Box2, const glm::vec
 	return (B.Min <= A.Max) && (A.Min <= B.Max);
 }
 
-bool World::Multiply(float * Out, const float * MatA, int ARows, int ACols, const float * MatB, int BRows, int BCols)
+void World::PrintCollided(Manifold* M, const Geometry Type1, const Geometry Type2)
+{
+	const char* CollisionTest{};
+
+	switch (Type1)
+	{
+	case AABB:
+		switch (Type2)
+		{
+		case AABB:
+			CollisionTest = "AABBToAABB";
+			break;
+
+		case OBB:
+			CollisionTest = "AABBToOBB";
+			break;
+
+		case CIRCLE:
+			CollisionTest = "AABBToCircle";
+			break;
+
+		case PLANE:
+			CollisionTest = "AABBToPlane";
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	case OBB:
+		switch (Type2)
+		{
+		case AABB:
+			CollisionTest = "OBBToAABB";
+			break;
+
+		case OBB:
+			CollisionTest = "OBBToOBB";
+			break;
+
+		case CIRCLE:
+			CollisionTest = "OBBToCircle";
+			break;
+
+		case PLANE:
+			CollisionTest = "OBBToPlane";
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	case CIRCLE:
+		switch (Type2)
+		{
+		case AABB:
+			CollisionTest = "CircleToAABB";
+			break;
+
+		case OBB:
+			CollisionTest = "CircleToOBB";
+			break;
+
+		case CIRCLE:
+			CollisionTest = "CircleToCircle";
+			break;
+
+		case PLANE:
+			CollisionTest = "CircleToPlane";
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	case PLANE:
+		switch (Type2)
+		{
+		case AABB:
+			CollisionTest = "PlaneToAABB";
+			break;
+
+		case OBB:
+			CollisionTest = "PlaneToOBB";
+			break;
+
+		case CIRCLE:
+			CollisionTest = "PlaneToCircle";
+			break;
+
+		case PLANE:
+			CollisionTest = "PlaneToPlane";
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	if (M->A->IsKinematic())
+		printf("%s (Kinematic): Collided!\n", CollisionTest);
+
+	if (M->B->IsKinematic())
+		printf("%s (Kinematic): Collided!\n", CollisionTest);
+
+	if (!M->A->IsKinematic() && !M->B->IsKinematic())
+		printf("%s: Collided!\n", CollisionTest);
+
+}
+
+void World::PrintError(Manifold * M, const Geometry Type1, const Geometry Type2)
+{
+	const char* CollisionTest{};
+	const char* Shape1{}, *Shape2{};
+
+	switch (Type1)
+	{
+	case AABB:
+		switch (Type2)
+		{
+		case AABB:
+			CollisionTest = "AABBToAABB";
+			Shape1 = "AABB";
+			Shape2 = "AABB";
+			break;
+
+		case OBB:
+			CollisionTest = "AABBToOBB";
+			Shape1 = "AABB";
+			Shape2 = "OBB";
+			break;
+
+		case CIRCLE:
+			CollisionTest = "AABBToCircle";
+			Shape1 = "AABB";
+			Shape2 = "Circle";
+			break;
+
+		case PLANE:
+			CollisionTest = "AABBToPlane";
+			Shape1 = "AABB";
+			Shape2 = "Plane";
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	case OBB:
+		switch (Type2)
+		{
+		case AABB:
+			CollisionTest = "OBBToAABB";
+			Shape1 = "OBB";
+			Shape2 = "AABB";
+			break;
+
+		case OBB:
+			CollisionTest = "OBBToOBB";
+			Shape1 = "OBB";
+			Shape2 = "OBB";
+			break;
+
+		case CIRCLE:
+			CollisionTest = "OBBToCircle";
+			Shape1 = "OBB";
+			Shape2 = "Circle";
+			break;
+
+		case PLANE:
+			CollisionTest = "OBBToPlane";
+			Shape1 = "OBB";
+			Shape2 = "Plane";
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	case CIRCLE:
+		switch (Type2)
+		{
+		case AABB:
+			CollisionTest = "CircleToAABB";
+			Shape1 = "Circle";
+			Shape2 = "AABB";
+			break;
+
+		case OBB:
+			CollisionTest = "CircleToOBB";
+			Shape1 = "Circle";
+			Shape2 = "OBB";
+			break;
+
+		case CIRCLE:
+			CollisionTest = "CircleToCircle";
+			Shape1 = "Circle";
+			Shape2 = "Circle";
+			break;
+
+		case PLANE:
+			CollisionTest = "CircleToPlane";
+			Shape1 = "Circle";
+			Shape2 = "Plane";
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	case PLANE:
+		switch (Type2)
+		{
+		case AABB:
+			CollisionTest = "PlaneToAABB";
+			Shape1 = "Plane";
+			Shape2 = "AABB";
+			break;
+
+		case OBB:
+			CollisionTest = "PlaneToOBB";
+			Shape1 = "Plane";
+			Shape2 = "OBB";
+			break;
+
+		case CIRCLE:
+			CollisionTest = "PlaneToCircle";
+			Shape1 = "Plane";
+			Shape2 = "Circle";
+			break;
+
+		case PLANE:
+			CollisionTest = "PlaneToPlane";
+			Shape1 = "Plane";
+			Shape2 = "Plane";
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	if (M->A == nullptr && M->B != nullptr)
+		printf("%s: %s is null\n", CollisionTest, Shape1);
+
+	if (M->A != nullptr && M->B == nullptr)
+		printf("%s: %s is null\n", CollisionTest, Shape2);
+
+	if (M->A == nullptr && M->B == nullptr)
+		printf("%s: Both of the objects were null\n", CollisionTest);
+}
+
+bool World::Multiply(float * Out, const float * MatA, const int ARows, const int ACols, const float * MatB, const int BRows, const int BCols)
 {
 	if (ACols != BRows)
 		return false;
@@ -795,6 +955,11 @@ bool World::Multiply(float * Out, const float * MatA, int ARows, int ACols, cons
 glm::vec2 World::Normalize(const glm::vec2 & Vector)
 {
 	return Vector * (1.0f/length(Vector));
+}
+
+float World::MagnitudeSquared(const glm::vec2 & Vector)
+{
+	return dot(Vector, Vector);
 }
 
 void World::ResolveCollision(Manifold* M)

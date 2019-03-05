@@ -16,7 +16,12 @@ public:
 	void PositionalCorrection(Manifold* M);
 
 	float GetDistance() const { return DistanceToOrigin; }
+
+	glm::vec2 GetStart() const { return Start; }
+	glm::vec2 GetEnd() const { return End; }
 private:
 	float DistanceToOrigin{};
+
+	glm::vec2 Start{}, End{};
 };
 
