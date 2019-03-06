@@ -223,10 +223,10 @@ void Physics2DEngine::DrawText()
 {
 	Renderer->drawText(Font, "2D Physics Engine", 10, 12);
 
-	Renderer->drawText(Font, "Popcorn physics engine", float( GetWindowWidth()) / 2 - 200, float(GetWindowHeight()) / 2);
-	Renderer->drawText(FontSmall, "*World's first", float(GetWindowWidth()) / 2 - 110, float(GetWindowHeight()) / 2 - 30);
+	//Renderer->drawText(Font, "Popcorn physics engine", float( GetWindowWidth()) / 2 - 200, float(GetWindowHeight()) / 2);
+	//Renderer->drawText(FontSmall, "*World's first", float(GetWindowWidth()) / 2 - 110, float(GetWindowHeight()) / 2 - 30);
 
-	Renderer->drawText(FontSmall, "Pop!", float( GetWindowWidth()) / 2 - 100, float(GetWindowHeight()) / 2 + 50);
-	Renderer->drawText(FontSmall, "Pop!", float( GetWindowWidth()) / 2 + 200, float(GetWindowHeight()) / 2 + 100);
-	Renderer->drawText(FontSmall, "Pop!", float( GetWindowWidth()) / 2 - 250, float(GetWindowHeight()) / 2 - 100);
+	//Renderer->drawText(FontSmall, "Pop!", float( GetWindowWidth()) / 2 - 100, float(GetWindowHeight()) / 2 + 50);
+	//Renderer->drawText(FontSmall, "Pop!", float( GetWindowWidth()) / 2 + 200, float(GetWindowHeight()) / 2 + 100);
+	//Renderer->drawText(FontSmall, "Pop!", float( GetWindowWidth()) / 2 - 250, float(GetWindowHeight()) / 2 - 100);
 }

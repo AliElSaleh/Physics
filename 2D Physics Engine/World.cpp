@@ -5,7 +5,7 @@
 
 #include <glm/ext.hpp>
 #include "Plane.h"
-#include <cstdio>
+#include <stdio.h>
 #include "OBB.h"
 #include "Input.h"
 
@@ -84,6 +84,8 @@ void World::CheckForCollisions()
 			
 			if (CollisionFunctionPtr != nullptr)
 				CollisionFunctionPtr(M);
+
+			delete M;
 		}
 	}
 }
