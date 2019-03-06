@@ -41,13 +41,17 @@ void Plane::ResolveCollision(Manifold* M)
 {
 	const glm::vec2 RelativeVelocity = M->B->GetVelocity();
 
+	// Do not resolve if velocities are separating
+	if (dot(RelativeVelocity, M->Normal) > 0)
+		return;
+
 	// Calculate restitution
 	const float e = M->B->GetRestitution();
 
 	// Impulse scalar calculation
 	float j = dot(-(1 + e) * RelativeVelocity, M->Normal) / M->B->GetInverseMass();
 
-	glm::vec2 Force = M->Normal * j;
+	glm::vec2 Force = M->Normal * j * M->B->GetInverseMass();
 
 	M->B->ApplyForce(Force);
 	PositionalCorrection(M);

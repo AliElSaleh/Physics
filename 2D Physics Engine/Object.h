@@ -34,12 +34,8 @@ public:
 	glm::vec2 GetLocation() const { return Location; }
 	glm::vec2 GetVelocity() const { return  Velocity; }
 	glm::vec2 GetNormal() const { return Normal; }
-
-	void SetKinematic(const bool State) { bIsKinematic = State; }
-	bool IsKinematic() const { return bIsKinematic; }
-
-	Geometry GetShape() const { return Shape; }
 	glm::vec4 GetColor() const { return Color; }
+	Geometry GetShape() const { return Shape; }
 
 	float GetRotation() const { return Rotation; }
 	float GetMass() const { return Mass; }
@@ -48,6 +44,13 @@ public:
 	float GetAngularVelocity() const { return AngularVelocity; }
 	float GetMoment() const { return Moment; }
 	float GetFriction() const { return Friction; }
+
+	void SetKinematic(const bool State) { bIsKinematic = State; }
+	void SetNormal(const glm::vec2 Normal) { this->Normal = Normal; }
+
+	bool IsKinematic() const { return bIsKinematic; }
+
+	bool IsOutsideWindow() const;
 
 protected:
 	float Rotation{0.0f};

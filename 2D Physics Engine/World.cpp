@@ -44,7 +44,12 @@ void World::Update(const float DeltaTime)
 	while (AccumulatedTime >= DeltaTime)
 	{
 		for (auto Actor : Actors)
+		{
 			Actor->FixedUpdate(Gravity, TimeStep);
+
+			if (Actor->IsOutsideWindow() && !Actor->IsKinematic() && Actor->GetShape() != PLANE)
+				RemoveActor(Actor);
+		}
 	
 		CheckForCollisions();
 	
@@ -205,7 +210,7 @@ bool World::AABBToPlane(Manifold* M)
 		if (t > 0.0f && t * t < MagnitudeSquared(Plane->GetEnd() - Plane->GetStart()))
 		{
 			M->ContactsCount = 1;
-			M->Penetration = PenetrationDepth;
+			M->Penetration = 5.0f;
 			M->Normal = CollisionNormal;
 
 			Plane->ResolveCollision(M);
@@ -235,13 +240,12 @@ bool World::AABBToOBB(Manifold* M)
 
 		OBBToAABB(M);
 
-		M->Normal *= -1.0f;
+		M->Normal *= -1;
 
 		return true;
 	}
-
-	PrintError(Rec, Box, AABB, OBB);
-
+	
+	OBBToAABB(M);
 	return false;
 }
 
@@ -301,21 +305,18 @@ bool World::CircleToPlane(Manifold* M)
 		const glm::vec2 CircleToClosest[] = {C->GetLocation(), ClosestPoint};
 
 		glm::vec2 CollisionNormal = P->GetNormal();
-		float CircleToPlane = dot(C->GetLocation(), CollisionNormal) - P->GetDistance();
+		const float CircleToPlane = dot(C->GetLocation(), CollisionNormal) - P->GetDistance();
 		
 		// If we are behind the plane, then flip the normal
 		if (CircleToPlane < 0)
-		{
 			CollisionNormal *= -1;
-			CircleToPlane *= -1;
-		}
 
 		const float Intersection = MagnitudeSquared(CircleToClosest[1] - CircleToClosest[0]);
 		if (Intersection < C->GetRadius() * C->GetRadius() * 1.1f) // 1.1 - offset
 		{
 			M->ContactsCount = 1;
-			M->Penetration = CircleToPlane;
-			M->Normal = P->GetNormal();
+			M->Penetration = Intersection * Intersection;
+			M->Normal = CollisionNormal;
 		
 			P->ResolveCollision(M);
 
@@ -411,9 +412,9 @@ bool World::OBBToAABB(Manifold* M)
 								  glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 0.0f)};
 
 		// Create rotation matrix
-		const float t = DEG2RAD(Box->GetRotation());
-		float ZRotation[] = {cosf(t), sinf(t),
-							 -sinf(t), cosf(t)};
+		const float r = DEG2RAD(Box->GetRotation());
+		float ZRotation[] = {cosf(r), sinf(r),
+							-sinf(r), cosf(r)};
 
 		// Create separating axis number 3
 		glm::vec2 Axis = Normalize(glm::vec2(Box->GetExtent().x, 0.0f));
@@ -433,12 +434,10 @@ bool World::OBBToAABB(Manifold* M)
 		}
 
 		M->ContactsCount++;
-		M->Normal = Box->GetLocation() - Rec->GetLocation();
+		M->Penetration = 5.0f;
+		M->Normal = Axis;
 
 		ResolveCollision(M);
-
-		PrintCollided(M, OBB, AABB);
-
 		return true;
 	}
 
@@ -523,13 +522,10 @@ bool World::OBBToOBB(Manifold * M)
 		}
 
 		M->ContactsCount++;
-		M->Penetration = 5.0f;
+		M->Penetration = 2.0f;
 		M->Normal = Normalize(Box2->GetLocation() - Box1->GetLocation());
 		
 		ResolveCollision(M);
-
-		PrintCollided(M, OBB, OBB);
-
 		return true;
 	}
 
@@ -538,18 +534,53 @@ bool World::OBBToOBB(Manifold * M)
 	return false;
 }
 
-bool World::OBBToPlane(Manifold * M)
+bool World::OBBToPlane(Manifold* M)
 {
-	const auto Box = dynamic_cast<class OBB*>(M->A);
-	const auto Plane = dynamic_cast<::Plane*>(M->B);
+	const auto Plane = dynamic_cast<::Plane*>(M->A);
+	const auto Box = dynamic_cast<class OBB*>(M->B);
 
 	if (Box != nullptr && Plane != nullptr)
 	{
-		// TODO: Implement OBB To Plane collision test 
-	}
-	else
-		CircleToCircle(M);
+		// Create a rotation matrix 
+		float Theta = -DEG2RAD(Box->GetRotation());
+		float ZRotation[] ={cosf(Theta), sinf(Theta),
+						   -sinf(Theta), cosf(Theta)};
 
+		// Create a new plane in the local space of the OBB
+		::Plane LocalPlane;
+		LocalPlane.SetNormal(Plane->GetNormal());
+
+		glm::vec2 RotationVector = Plane->GetStart() - Box->GetLocation();
+		Multiply(RotationVector.AsArray, glm::vec2(RotationVector.x, RotationVector.y).AsArray, 1, 2, ZRotation, 2, 2);
+		LocalPlane.SetStart(RotationVector + 0.1f);
+
+		RotationVector = Plane->GetEnd() - Box->GetLocation();
+		Multiply(RotationVector.AsArray, glm::vec2(RotationVector.x, RotationVector.y).AsArray, 1, 2, ZRotation, 2, 2);
+		LocalPlane.SetEnd(RotationVector + 0.1f);
+
+		class AABB LocalAABB(glm::vec2(), Box->GetVelocity(), Box->GetExtent().x * 2, Box->GetExtent().y * 2, Box->GetMass(), Box->GetColor());
+
+		M->A = &LocalPlane;
+		M->B = &LocalAABB;
+
+		// The OBB in local space is an AABB, use our existing function to test for collision
+		if (AABBToPlane(M))
+		{
+			M->A = Plane;
+			M->B = Box;
+
+			M->ContactsCount = 1;
+			M->Penetration = 5.0f;
+			M->Normal = Plane->GetNormal();
+
+			Plane->ResolveCollision(M);
+			return true;
+		}
+
+		return false;
+	}
+
+	CircleToCircle(M);
 	return false;
 }
 
@@ -624,9 +655,9 @@ Interval World::GetInterval(const class OBB& Box, const glm::vec2& Axis)
 	glm::vec2 Vertices[] = {Min, Max, glm::vec2(Min.x, Max.y), glm::vec2(Max.x, Min.y)}; // Bottom left - Top right - Top left - Bottom right
 
 	// Create a rotation matrix from the orientation on the AABB
-	const float t = DEG2RAD(Box.GetRotation());
-	float ZRotation[] = {cosf(t), sinf(t),
-						-sinf(t), cosf(t)};
+	const float r = DEG2RAD(Box.GetRotation());
+	float ZRotation[] = {cosf(r), sinf(r),
+						-sinf(r), cosf(r)};
 
 	// Rotate every vertex of the AABB by the matrix above 
 	for (int i = 0; i < 4; i++)
@@ -643,9 +674,9 @@ Interval World::GetInterval(const class OBB& Box, const glm::vec2& Axis)
 	Result.Min = Result.Max = dot(Axis, Vertices[0]);
 	for (int i = 0; i < 4; i++)
 	{
-		float Projection = dot(Axis, Vertices[i]);
-		Result.Min = (Projection < Result.Min) ? Projection : Result.Min;
-		Result.Max = (Projection > Result.Max) ? Projection : Result.Max;
+		float Projected = dot(Axis, Vertices[i]);
+		Result.Min = (Projected < Result.Min) ? Projected : Result.Min;
+		Result.Max = (Projected > Result.Max) ? Projected : Result.Max;
 	}
 
 	return Result;

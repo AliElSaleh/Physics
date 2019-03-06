@@ -35,7 +35,7 @@ OBB::OBB(glm::vec2 Location, glm::vec2 Velocity, glm::vec2 Extent, float Rotatio
 	else
 		this->InverseMass = 1.0f / Mass;
 	
-	this->AngularVelocity = 0.0f;
+	this->AngularVelocity = 10.0f;
 	this->Moment = 1.0f;
 
 	Shape = Geometry::OBB;

@@ -116,18 +116,25 @@ bool Physics2DEngine::Startup()
 	//
 
 	// AABBs
-	for (int i = 0; i < 30; i++)
-	{
-		const auto Rec = new class AABB({ rand() % 30 - 20, rand() % 80 - 30}, { 0.0f, 0.0f }, 3.0f, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-		PhysicsWorld->AddActor(Rec);
-	}
+	//for (int i = 0; i < 10; i++)
+	//{
+	//	const auto Rec = new class AABB({ rand() % 30 - 20, rand() % 80 - 30}, { 0.0f, 0.0f }, 3.0f, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+	//	PhysicsWorld->AddActor(Rec);
+	//}
+	
+	// OBBs
+	//for (int i = 0; i < 10; i++)
+	//{
+	//	const auto Box = new class OBB({ rand() % 30 - 20, rand() % 80 - 30}, { 0.0f, 0.0f }, {1.5f, 1.5f}, 45, 2.0f, { 1, 0.992, 0.658, 1.0f });
+	//	PhysicsWorld->AddActor(Box);
+	//}
 
 	// Circles
-	for (int i = 0; i < 30; i++)
-	{
-		const auto C = new Circle({ rand() % 30 - 20, rand() % 80 - 30}, { 0.0f, 0.0f }, 2.0f, 1.0f, { 1, 0.992, 0.658, 1.0f });
-		PhysicsWorld->AddActor(C);
-	}
+	//for (int i = 0; i < 10; i++)
+	//{
+	//	const auto C = new Circle({ rand() % 30 - 20, rand() % 80 - 30}, { 0.0f, 0.0f }, 2.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+	//	PhysicsWorld->AddActor(C);
+	//}
 
 	return true;
 }
@@ -155,12 +162,23 @@ void Physics2DEngine::Update(const float DeltaTime)
 
 	PhysicsWorld->Update(DeltaTime);
 
-	if (Input->wasKeyPressed(aie::INPUT_KEY_SPACE))
+	if (Input->wasKeyPressed(aie::INPUT_KEY_C))
 	{
-		const auto C = new Circle({0.0f, 40.0f}, { 0.0f, -10.0f }, 2.0f, 1.0f, { 1, 0.992, 0.658, 1.0f });
+		const auto C = new Circle({0.0f, 40.0f}, { 0.0f, -10.0f }, 2.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
 		PhysicsWorld->AddActor(C);
 	}
 
+	if (Input->wasKeyPressed(aie::INPUT_KEY_A))
+	{
+		const auto Rec = new class AABB({0.0f, 40.0f}, { 0.0f, 0.0f }, 3.0f, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+		PhysicsWorld->AddActor(Rec);
+	}
+
+	if (Input->wasKeyPressed(aie::INPUT_KEY_B))
+	{
+		const auto Box = new class OBB({0.0f, 40.0f}, { 0.0f, 0.0f }, {1.5f, 1.5f}, rand() % 360, 2.0f, { 1, 0.992, 0.658, 1.0f });
+		PhysicsWorld->AddActor(Box);
+	}
 	// Check if mouse is intersecting the cue ball
 	//if (Input->isKeyDown(aie::INPUT_KEY_A))
 	//	Cue->ApplyForce({ -10.0f, 0.0f });

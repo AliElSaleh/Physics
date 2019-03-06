@@ -26,11 +26,16 @@ void Object::FixedUpdate(const glm::vec2 Gravity, const float TimeStep)
 	Velocity -= Velocity * Friction * LinearDrag * TimeStep;
 
 	Rotation += AngularVelocity * TimeStep;
-	AngularVelocity -= AngularDrag * AngularDrag * TimeStep;
+	AngularVelocity -= AngularVelocity * AngularDrag * TimeStep;
 
 	if (length(Velocity) < MIN_LINEAR_THRESHOLD)
 		Velocity = glm::vec2(0.0f, 0.0f);
 	
 	if (fabs(AngularVelocity) > MIN_ROTATION_THRESHOLD)
 		AngularVelocity = 0.0f;
+}
+
+bool Object::IsOutsideWindow() const
+{
+	return Location.x > 110 || Location.x < -110 || Location.y > 110 || Location.y < -110;
 }
