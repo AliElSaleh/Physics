@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="AABB">
+    <Position X="0.5" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>EBAAAAgABhAAAIAAEAAAAEBCAQAAAAAAAAAAAFAAAAA=</HashCode>
+      <FileName>AABB.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OBB">
+    <Position X="5" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgAAoAAAIAAAABAAAQAAQAAAAAAAAgAAAAACAA=</HashCode>
+      <FileName>OBB.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Circle">
+    <Position X="7.25" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAgAAAgAAIAAAAAAAAAAAAgAAAAAAAAAAAgAAAA=</HashCode>
+      <FileName>Circle.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Manifold">
+    <Position X="6" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>BAAAAAAIAAAAAAAAAAAAACAAAAAIAAAAAAAAIAEAABA=</HashCode>
+      <FileName>Manifold.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Object">
+    <Position X="3.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAMAAgGA4CEEIAhAAIACSAFAEIIAEGABABBoASEEAA=</HashCode>
+      <FileName>Object.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Physics2DEngine">
+    <Position X="9.5" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAgAAABACAgAAAAAAAQQAAAAAIAAAgACAAAACAIA=</HashCode>
+      <FileName>Physics2DEngine.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Plane">
+    <Position X="2.75" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAhAACAAAIAAggAAAQAAAEAAAAAEBAIAIAAACAA=</HashCode>
+      <FileName>Plane.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="World">
+    <Position X="1.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAQSBAYAAVAakAEEAIABQQAEABAKAgBABEAiAAAIApE=</HashCode>
+      <FileName>World.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Struct Name="Interval">
+    <Position X="7.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Object.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Typedef Name="CollisionFn" Collapsed="true">
+    <Position X="9.5" Y="0.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>World.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Enum Name="Geometry">
+    <Position X="7.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAACAAAAAAAAAAAACAAAAAAAgAAAAAAAAEAACAA=</HashCode>
+      <FileName>Object.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

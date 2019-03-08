@@ -38,8 +38,8 @@ public:
 	static bool CircleToCircle(Manifold* M);
 	static bool CircleToPlane(Manifold* M);
 	static bool CircleToOBB(Manifold* M);
-	static bool PlaneToCircle(Manifold* M);
 	static bool PlaneToAABB(Manifold* M);
+	static bool PlaneToCircle(Manifold* M);
 	static bool PlaneToPlane(Manifold* M);
 	static bool OBBToAABB(Manifold* M);
 	static bool OBBToCircle(Manifold* M);
@@ -66,7 +66,6 @@ private:
 
 	static bool Multiply(float* Out, const float* MatA, int ARows, int ACols, const float* MatB, int BRows, int BCols);
 
-	static glm::vec2 Normalize(const glm::vec2& Vector);
 	static float MagnitudeSquared(const glm::vec2& Vector);
 	static float LengthSquared(glm::vec2 Vector);
 };

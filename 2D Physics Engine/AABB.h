@@ -21,7 +21,7 @@ public:
 	glm::vec2 GetMin() const { return Min; }
 	glm::vec2 GetMax() const { return Max; }
 
-protected:
+private:
 	glm::vec2 Extent{};
 	
 

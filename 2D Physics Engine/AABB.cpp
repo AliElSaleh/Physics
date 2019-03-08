@@ -25,7 +25,7 @@ AABB::AABB(const glm::vec2 Location, const glm::vec2 Velocity, const float Width
 	this->AngularVelocity = 0.0f;
 	this->Moment = 1.0f;
 
-	this->Normal = normalize(Velocity);
+//	this->Normal = normalize(Velocity);
 
 	this->Color = Color;
 

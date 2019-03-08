@@ -19,7 +19,7 @@ Circle::Circle(const glm::vec2 Location, const glm::vec2 Velocity, const float R
 	else
 		this->InverseMass = 1.0f / Mass;
 	
-	this->Normal = normalize(Velocity);
+//	this->Normal = normalize(Velocity);
 
 	this->AngularVelocity = 0.0f;
 	this->Moment = 0.5f * Mass * Radius * Radius;

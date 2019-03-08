@@ -188,7 +188,7 @@ bool World::AABBToPlane(Manifold* M)
 			return true;
 
 		// Do raycast against the AABB
-		glm::vec2 Normal = Normalize(Plane->GetEnd() - Plane->GetStart());
+		glm::vec2 Normal = normalize(Plane->GetEnd() - Plane->GetStart());
 		Normal.x = Normal.x != 0 ? 1.0f/Normal.x : 0;
 		Normal.y = Normal.y != 0 ? 1.0f/Normal.y : 0;
 
@@ -419,12 +419,12 @@ bool World::OBBToAABB(Manifold* M)
 							-sinf(r), cosf(r)};
 
 		// Create separating axis number 3
-		glm::vec2 Axis = Normalize(glm::vec2(Box->GetExtent().x, 0.0f));
+		glm::vec2 Axis = normalize(glm::vec2(Box->GetExtent().x, 0.0f));
 
 		Multiply(AxisToTest[2].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
 
 		// Create separating axis number 4
-		Axis = Normalize(glm::vec2(0.0f, Box->GetExtent().y));
+		Axis = normalize(glm::vec2(0.0f, Box->GetExtent().y));
 
 		Multiply(AxisToTest[3].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
 
@@ -497,22 +497,22 @@ bool World::OBBToOBB(Manifold * M)
 							-sinf(t), cosf(t)};
 
 		// Create separating axis number 3
-		glm::vec2 Axis = Normalize(glm::vec2(Box2->GetExtent().x, 0.0f));
+		glm::vec2 Axis = normalize(glm::vec2(Box2->GetExtent().x, 0.0f));
 
 		Multiply(AxisToTest[2].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
 
 		// Create separating axis number 4
-		Axis = Normalize(glm::vec2(0.0f, Box2->GetExtent().y));
+		Axis = normalize(glm::vec2(0.0f, Box2->GetExtent().y));
 
 		Multiply(AxisToTest[3].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
 
 		// Create separating axis number 5
-		Axis = Normalize(glm::vec2(Box2->GetExtent().x, 0.0f));
+		Axis = normalize(glm::vec2(Box2->GetExtent().x, 0.0f));
 
 		Multiply(AxisToTest[4].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
 
 		// Create separating axis number 6
-		Axis = Normalize(glm::vec2(0.0f, Box2->GetExtent().y));
+		Axis = normalize(glm::vec2(0.0f, Box2->GetExtent().y));
 
 		Multiply(AxisToTest[5].AsArray, Axis.AsArray, 1, 2, ZRotation, 2, 2);
 
@@ -525,7 +525,7 @@ bool World::OBBToOBB(Manifold * M)
 
 		M->ContactsCount++;
 		M->Penetration = 2.0f;
-		M->Normal = Normalize(Box2->GetLocation() - Box1->GetLocation());
+		M->Normal = normalize(Box2->GetLocation() - Box1->GetLocation());
 		
 		ResolveCollision(M);
 		return true;
@@ -995,11 +995,11 @@ bool World::Multiply(float * Out, const float * MatA, const int ARows, const int
 	return true;
 }
 
-glm::vec2 World::Normalize(const glm::vec2 & Vector)
-{
-	return Vector * (1.0f/length(Vector));
-}
-
+//glm::vec2 World::Normalize(const glm::vec2 & Vector)
+//{
+//	return Vector * (1.0f/length(Vector));
+//}
+//
 float World::MagnitudeSquared(const glm::vec2 & Vector)
 {
 	return dot(Vector, Vector);
@@ -1052,7 +1052,7 @@ void World::ResolveCollision(Manifold* M)
 		if (LengthSquared(t) > 0.0f)
 			return;
 
-		Normalize(t);
+		normalize(t);
 
 		// Calculate magnitude of friction
 		j = -dot(RelativeVelocity, t);

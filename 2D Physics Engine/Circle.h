@@ -14,7 +14,7 @@ public:
 
 	float GetRadius() const { return Radius; }
 
-protected:
+private:
 	float Radius{};
 };
 
