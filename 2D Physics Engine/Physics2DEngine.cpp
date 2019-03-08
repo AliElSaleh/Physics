@@ -31,6 +31,13 @@ bool Physics2DEngine::Startup()
 	Ball->SetKinematic(true);
 	PhysicsWorld->AddActor(Ball);
 
+	// Slider settings
+	SliderLocation = {600.0f, 40.0f};
+	SliderLength = 1.0f;
+	ReachedMin = true;
+	ReachedMax = false;
+	IncrementRate = 700.0f;
+
 	// Borders
 	// Plane
 	// Left
@@ -67,9 +74,9 @@ bool Physics2DEngine::Startup()
 	// Kinematic circles
 	for (int i = 0; i < 4; i++)
 	{
-		for (int j = 0; j < 10; j++)
+		for (int j = 0; j < 12; j++)
 		{
-			auto C = new Circle({ -80.0f + XSpacing, 30.0f + YSpacing }, { 0.0f, 0.0f }, 2.0f, 1.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+			auto C = new Circle({ -100.0f + XSpacing, 30.0f + YSpacing }, { 0.0f, 0.0f }, 2.0f, 4.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
 			C->SetKinematic(true);
 			PhysicsWorld->AddActor(C);
 			XSpacing += 15;
@@ -82,12 +89,12 @@ bool Physics2DEngine::Startup()
 	XSpacing = 17;
 	YSpacing = 3;
 
-	// Kinematic AABBs
+	// Kinematic OBBs
 	for (int i = 0; i < 4; i++)
 	{
-		for (int j = 0; j < 9; j++)
+		for (int j = 0; j < 12; j++)
 		{
-			const auto O = new class OBB({ -80.0f + XSpacing, 30.0f + YSpacing }, { 0.0f, 0.0f }, { 1.0f, 1.0f }, 45.0f, 2.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+			const auto O = new class OBB({ -100.0f + XSpacing, 30.0f + YSpacing }, { 0.0f, 0.0f }, { 1.0f, 1.0f }, 45.0f, 4.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
 			O->SetKinematic(true);
 			PhysicsWorld->AddActor(O);
 			XSpacing += 15;
@@ -134,10 +141,38 @@ void Physics2DEngine::Update(const float DeltaTime)
 
 	PhysicsWorld->Update(DeltaTime);
 
+	// Slider mechanic
+	if (CanShoot)
+	{
+		if (floorf(SliderLength) < 300 && ReachedMin)
+		{
+			SliderLength += IncrementRate * DeltaTime;
+
+			if (SliderLength >= 300)
+			{
+				SliderLength = 300;
+				ReachedMax = true;
+				ReachedMin = false;
+			}
+		}
+
+		if (floorf(SliderLength) <= 300 && ReachedMax)
+		{
+			SliderLength -= IncrementRate * DeltaTime;
+
+			if (SliderLength <= 1)
+			{
+				ReachedMin = true;
+				ReachedMax = false;
+			}
+		}
+	}
+
+	// Shoot ball on key press
 	if (Input->wasKeyPressed(aie::INPUT_KEY_SPACE) && CanShoot)
 	{
 		Ball->SetKinematic(false);
-		Ball->ApplyForce({ 0.0f, 200.0f });
+		Ball->ApplyForce({ 0.0f, SliderLength * 1.5f});
 		CanShoot = false;
 	}
 
@@ -150,6 +185,7 @@ void Physics2DEngine::Update(const float DeltaTime)
 		Ball->Collided = false;
 	}
 
+	// Spawn a circle
 	if (Input->wasKeyPressed(aie::INPUT_KEY_C))
 	{
 		const auto C = new Circle({ rand() % -20 - rand() % 20, 70.0f }, { 0.0f, -10.0f }, 3.0f, 1.5f, { 1, 0.992, 0.658, 1.0f });
@@ -170,6 +206,9 @@ void Physics2DEngine::Draw()
 
 	// UI
 	DrawText();
+
+	// Slider
+	Renderer->drawBox(SliderLocation.x, SliderLocation.y, SliderLength, 5.0f);
 
 	// Gizmos
 	static float AspectRatio = 4.0f / 3.0f;

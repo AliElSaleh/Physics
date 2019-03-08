@@ -27,12 +27,18 @@ protected:
 
 	Circle* Ball{};
 
-	glm::vec2 MouseLocation{};
 private:
 	float XSpacing = 10.0f;
 	float YSpacing = 10.0f;
 
 	bool CanShoot = true;
+
+	glm::vec2 SliderLocation{};
+	float SliderLength = 1;
+	float IncrementRate = 10.0f;
+
+	bool ReachedMax{false};
+	bool ReachedMin{false};
 
 	void DrawText();
 };
