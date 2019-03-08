@@ -45,6 +45,7 @@ public:
 	float GetMoment() const { return Moment; }
 	float GetFriction() const { return Friction; }
 
+	void SetLocation(const glm::vec2 Location) { this->Location = Location; }
 	void SetKinematic(const bool State) { bIsKinematic = State; }
 	void SetNormal(const glm::vec2 Normal) { this->Normal = Normal; }
 

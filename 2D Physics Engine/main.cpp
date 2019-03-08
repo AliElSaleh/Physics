@@ -6,7 +6,7 @@ int main() {
 	auto app = new Physics2DEngine();
 
 	// initialise and loop
-	app->run("AIE", 1280, 720, false);
+	app->run("AIE", 960, 720, false);
 
 	// deallocation
 	delete app;

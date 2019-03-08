@@ -11,7 +11,6 @@
 #include <glm/gtc/matrix_transform.inl>
 #include <string.h>
 #include <string>
-#include <stdio.h>
 
 Physics2DEngine::Physics2DEngine() = default;
 Physics2DEngine::~Physics2DEngine() = default;
@@ -28,113 +27,86 @@ bool Physics2DEngine::Startup()
 	PhysicsWorld->Gravity = {0.0f, -19.81f};
 	PhysicsWorld->TimeStep = 0.01f;
 	
+	Ball = new Circle({ 95.0f, -55.0f }, { 0.0f, -10.0f }, 3.0f, 1.5f, { 1, 0.992, 0.658, 1.0f });
+	Ball->SetKinematic(true);
+	PhysicsWorld->AddActor(Ball);
+
 	// Borders
+	// Plane
 	// Left
-	//auto B = new class AABB({ -95.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
-	//B->SetKinematic(true);
-	//PhysicsWorld->AddActor(B);
-	//
-	//// Right
-	//B = new class AABB({ 95.0f, 0.0f }, { 0.0f, 0.0f }, 5.0f, 100.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
-	//B->SetKinematic(true);
-	//PhysicsWorld->AddActor(B);
-	
-	//// Top
-	//B = new class AABB({ 0.0f, 50.0f }, { 0.0f, 0.0f }, 180.0f, 5.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
-	//B->SetKinematic(true);
-	//PhysicsWorld->AddActor(B);
-	
+	glm::vec2 Normal = { 1.0f, 0.0f };
+	PhysicsWorld->AddActor(new Plane(Normal, -99.5f, 300));
+
+	// Right
+	Normal = { 1.0f, 0.0f };
+	PhysicsWorld->AddActor(new Plane(Normal, 99.7f, 300));
+
+	// Barrier
+	auto B = new class AABB({ 90.0f, -20.0f }, { 0.0f, 0.0f }, 1.0f, 80.0f, 2.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+	B->SetKinematic(true);
+	PhysicsWorld->AddActor(B);
+
+	// Top
+	Normal = { 0.0f, 1.0f };
+	PhysicsWorld->AddActor(new Plane(Normal, 72.0f, 300));
+
 	// Bottom
-	//B = new class AABB({ 0.0f, -50.0f }, { 0.0f, 0.0f }, 180.0f, 5.0f, 10.0f, { 0.780f, 0.403f, 0.0f, 1.0f });
-	//B->SetKinematic(true);
-	//PhysicsWorld->AddActor(B);
+	Normal = { 0.0f, 1.0f };
+	const auto BottomPlane = new Plane(Normal, -60.0f, 300);
+	BottomPlane->SetKinematic(true);
+	PhysicsWorld->AddActor(BottomPlane);
 
-	//auto R = new Box({ 20.0f, 20.0f }, { -20.0f, -10.0f }, {10.0f, 5.0f}, 0.0f, 10.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
-	//PhysicsWorld->AddActor(R);
+	// Right diagonal
+	Normal = { 0.5f, 0.5f };
+	PhysicsWorld->AddActor(new Plane(Normal, 150.0f, 300));
 
-	//auto R = new AABB({ 0.0f, 0.0f }, { 0.0f, -20.0f }, 3, 3, 10.0f, { 1.0f, 1.0f, 0.0f, 1.0f });
-	//PhysicsWorld->AddActor(R);
-	//
-	//R = new AABB({ 0.0f, 40.0f }, { 0.0f, -10.0f }, 3, 3, 10.0f, { 1.0f, 1.0f, 0.0f, 1.0f });
-	//PhysicsWorld->AddActor(R);
+	// Left diagonal
+	Normal = { 0.5f, -0.5f };
+	PhysicsWorld->AddActor(new Plane(Normal, -150.0f, 300));
 
-	//const auto C = new Circle({ 0.0f, 0.0f }, { 10.0f, -10.0f }, 6.0f, 10.0f, { 0.0f, 1.0f, 1.0f, 1.0f });
-	//PhysicsWorld->AddActor(C);
+	// Kinematic circles
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 10; j++)
+		{
+			auto C = new Circle({ -80.0f + XSpacing, 30.0f + YSpacing }, { 0.0f, 0.0f }, 2.0f, 1.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+			C->SetKinematic(true);
+			PhysicsWorld->AddActor(C);
+			XSpacing += 15;
+		}
 
-	// Plane
-	glm::vec2 Normal = { -0.65f, 0.75f };
-	PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
-	
-	// Plane
-	Normal = { 0.65f, 0.75f };
-	PhysicsWorld->AddActor(new Plane(Normal, -30.0f));
+		XSpacing = 10;
+		YSpacing -= 15;
+	}
 
-	// Pool setup
-	//float XOffset = -50;
-	//float YOffset = 6;
-	//
-	//// First row
-	//for (int i = 0; i < 4; i++)
-	//{
-	//	const auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-	//	YOffset -= 6;
-	//	PhysicsWorld->AddActor(C);
-	//}
-	//
-	//XOffset = -44;
-	//YOffset = 3;
-	//
-	//// Second row
-	//for (int i = 0; i < 3; i++)
-	//{
-	//	const auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-	//	YOffset -= 6;
-	//	PhysicsWorld->AddActor(C);
-	//}
-	//
-	//XOffset = -38;
-	//YOffset = 0;
-	//
-	//// Third row
-	//for (int i = 0; i < 2; i++)
-	//{
-	//	const auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-	//	YOffset -= 6;
-	//	PhysicsWorld->AddActor(C);
-	//}
-	//
-	//XOffset = -32;
-	//YOffset = -3;
-	//
-	//// Final row
-	//auto C = new Circle({ XOffset, YOffset }, { 0.0f, 0.0f }, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-	//PhysicsWorld->AddActor(C);
-	//
-	//// Cue
-	//Cue = new Circle({ 50.0f, -3.0f }, { 0.0f, 0.0f }, 3.0f, 5.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
-	//PhysicsWorld->AddActor(Cue);
-	//
+	XSpacing = 17;
+	YSpacing = 3;
 
-	// AABBs
-	//for (int i = 0; i < 10; i++)
-	//{
-	//	const auto Rec = new class AABB({ rand() % 30 - 20, rand() % 80 - 30}, { 0.0f, 0.0f }, 3.0f, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-	//	PhysicsWorld->AddActor(Rec);
-	//}
-	
-	// OBBs
-	//for (int i = 0; i < 10; i++)
-	//{
-	//	const auto Box = new class OBB({ rand() % 30 - 20, rand() % 80 - 30}, { 0.0f, 0.0f }, {1.5f, 1.5f}, 45, 2.0f, { 1, 0.992, 0.658, 1.0f });
-	//	PhysicsWorld->AddActor(Box);
-	//}
+	// Kinematic AABBs
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 9; j++)
+		{
+			const auto O = new class OBB({ -80.0f + XSpacing, 30.0f + YSpacing }, { 0.0f, 0.0f }, { 1.0f, 1.0f }, 45.0f, 2.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+			O->SetKinematic(true);
+			PhysicsWorld->AddActor(O);
+			XSpacing += 15;
+		}
 
-	// Circles
-	//for (int i = 0; i < 10; i++)
-	//{
-	//	const auto C = new Circle({ rand() % 30 - 20, rand() % 80 - 30}, { 0.0f, 0.0f }, 2.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-	//	PhysicsWorld->AddActor(C);
-	//}
+		XSpacing = 17;
+		YSpacing -= 15;
+	}
+
+	XSpacing = 15.0f;
+
+	// Kinematic AABBs
+	for (int i = 0; i < 12; i++)
+	{
+		B = new class AABB({ -105.0f + XSpacing, -45.0f }, { 0.0f, 0.0f }, 1.0f, 30.0f, 2.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+		B->SetKinematic(true);
+		PhysicsWorld->AddActor(B);
+		XSpacing += 15.0f;
+	}
 
 	return true;
 }
@@ -162,40 +134,27 @@ void Physics2DEngine::Update(const float DeltaTime)
 
 	PhysicsWorld->Update(DeltaTime);
 
+	if (Input->wasKeyPressed(aie::INPUT_KEY_SPACE) && CanShoot)
+	{
+		Ball->SetKinematic(false);
+		Ball->ApplyForce({ 0.0f, 200.0f });
+		CanShoot = false;
+	}
+
+	// Reset when collided with plane
+	if (Ball->Collided)
+	{
+		CanShoot = true;
+		Ball->SetLocation({ 95.0f, -55.0f });
+		Ball->SetKinematic(true);
+		Ball->Collided = false;
+	}
+
 	if (Input->wasKeyPressed(aie::INPUT_KEY_C))
 	{
-		const auto C = new Circle({0.0f, 40.0f}, { 0.0f, -10.0f }, 2.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
+		const auto C = new Circle({ rand() % -20 - rand() % 20, 70.0f }, { 0.0f, -10.0f }, 3.0f, 1.5f, { 1, 0.992, 0.658, 1.0f });
 		PhysicsWorld->AddActor(C);
 	}
-
-	if (Input->wasKeyPressed(aie::INPUT_KEY_A))
-	{
-		const auto Rec = new class AABB({0.0f, 40.0f}, { 0.0f, 0.0f }, 3.0f, 3.0f, 2.0f, { 1, 0.992, 0.658, 1.0f });
-		PhysicsWorld->AddActor(Rec);
-	}
-
-	if (Input->wasKeyPressed(aie::INPUT_KEY_B))
-	{
-		const auto Box = new class OBB({0.0f, 40.0f}, { 0.0f, 0.0f }, {1.5f, 1.5f}, rand() % 360, 2.0f, { 1, 0.992, 0.658, 1.0f });
-		PhysicsWorld->AddActor(Box);
-	}
-	// Check if mouse is intersecting the cue ball
-	//if (Input->isKeyDown(aie::INPUT_KEY_A))
-	//	Cue->ApplyForce({ -10.0f, 0.0f });
-	//
-	//if (Input->isKeyDown(aie::INPUT_KEY_D))
-	//	Cue->ApplyForce({ 10.0f, 0.0f });
-	//
-	//if (Input->isKeyDown(aie::INPUT_KEY_W))
-	//	Cue->ApplyForce({ 0.0f, 10.0f });
-	//
-	//if (Input->isKeyDown(aie::INPUT_KEY_S))
-	//	Cue->ApplyForce({ 0.0f, -10.0f });
-	//
-	//int x, y;
-	//Input->getMouseXY(&x, &y);
-	//
-	//MouseLocation = glm::vec2( x, y );
 
 	PhysicsWorld->UpdateGizmos();
 
@@ -213,7 +172,7 @@ void Physics2DEngine::Draw()
 	DrawText();
 
 	// Gizmos
-	static float AspectRatio = 16.0f / 9.0f;
+	static float AspectRatio = 4.0f / 3.0f;
 	aie::Gizmos::draw2D(glm::ortho<float>(-100, 100, -100 / AspectRatio, 100 / AspectRatio, -1.0f, 1.0f));
 
 	Renderer->end();
@@ -221,12 +180,5 @@ void Physics2DEngine::Draw()
 
 void Physics2DEngine::DrawText()
 {
-	Renderer->drawText(Font, "2D Physics Engine", 10, 12);
-
-	//Renderer->drawText(Font, "Popcorn physics engine", float( GetWindowWidth()) / 2 - 200, float(GetWindowHeight()) / 2);
-	//Renderer->drawText(FontSmall, "*World's first", float(GetWindowWidth()) / 2 - 110, float(GetWindowHeight()) / 2 - 30);
-
-	//Renderer->drawText(FontSmall, "Pop!", float( GetWindowWidth()) / 2 - 100, float(GetWindowHeight()) / 2 + 50);
-	//Renderer->drawText(FontSmall, "Pop!", float( GetWindowWidth()) / 2 + 200, float(GetWindowHeight()) / 2 + 100);
-	//Renderer->drawText(FontSmall, "Pop!", float( GetWindowWidth()) / 2 - 250, float(GetWindowHeight()) / 2 - 100);
+	Renderer->drawText(Font, "Pachinko", 10, 12);
 }

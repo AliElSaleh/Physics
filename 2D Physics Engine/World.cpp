@@ -317,9 +317,12 @@ bool World::CircleToPlane(Manifold* M)
 		if (Intersection < C->GetRadius() * C->GetRadius() * 1.1f) // 1.1 - offset
 		{
 			M->ContactsCount = 1;
-			M->Penetration = Intersection * Intersection;
+			M->Penetration = Intersection;
 			M->Normal = CollisionNormal;
 		
+			if (P->IsKinematic())
+				C->Collided = true;
+
 			P->ResolveCollision(M);
 
 			return true;

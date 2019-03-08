@@ -25,10 +25,14 @@ protected:
 
 	World* PhysicsWorld{};
 
-	Circle* Cue{};
+	Circle* Ball{};
 
 	glm::vec2 MouseLocation{};
 private:
+	float XSpacing = 10.0f;
+	float YSpacing = 10.0f;
+
+	bool CanShoot = true;
 
 	void DrawText();
 };

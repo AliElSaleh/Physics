@@ -14,6 +14,7 @@ public:
 
 	float GetRadius() const { return Radius; }
 
+	bool Collided{false};
 private:
 	float Radius{};
 };

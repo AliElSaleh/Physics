@@ -6,14 +6,16 @@ Plane::Plane()
 {
 	DistanceToOrigin = 0;
 	Normal = { 0.0f, 1.0f };
+	LineSegment = 300.0f;
 
 	Shape = PLANE;
 }
 
-Plane::Plane(const glm::vec2 Normal, const float Distance)
+Plane::Plane(const glm::vec2 Normal, const float Distance, const float LineLength)
 {
 	DistanceToOrigin = Distance;
 	this->Normal = Normal;
+	LineSegment = LineLength;
 
 	Shape = PLANE;
 }
@@ -26,13 +28,12 @@ void Plane::Debug()
 
 void Plane::MakeGizmo()
 {
-	const float LineSegmentLength = 300;
 	const glm::vec2 CenterPoint = Normal * DistanceToOrigin;
 
 	const glm::vec2 Parallel = { Normal.y, -Normal.x };
 	const glm::vec4 Color = { 1.0f, 1.0f, 1.0f, 1.0f };
-	Start = CenterPoint + Parallel * LineSegmentLength;
-	End = CenterPoint - Parallel * LineSegmentLength;
+	Start = CenterPoint + Parallel * LineSegment;
+	End = CenterPoint - Parallel * LineSegment;
 
 	aie::Gizmos::add2DLine(Start, End, Color);
 }
