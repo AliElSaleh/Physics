@@ -998,11 +998,6 @@ bool World::Multiply(float * Out, const float * MatA, const int ARows, const int
 	return true;
 }
 
-//glm::vec2 World::Normalize(const glm::vec2 & Vector)
-//{
-//	return Vector * (1.0f/length(Vector));
-//}
-//
 float World::MagnitudeSquared(const glm::vec2 & Vector)
 {
 	return dot(Vector, Vector);
